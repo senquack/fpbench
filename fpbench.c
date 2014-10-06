@@ -323,7 +323,6 @@ void bench_squareroot(uint32_t iterations)
 	avg_of_3_runs(&bench_fixed_sqrt, iterations);
 }
 
-
 int main(int argc, char **argv)
 {
 	srand(time(NULL));
