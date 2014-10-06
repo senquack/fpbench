@@ -1,0 +1,41 @@
+32-bit Floating Point vs. 16.16 Fixed-point Math Speed Comparison
+Written by Dan Silsby  dansilsby <AT> gmail <DOT> com
+NOTE: before each benchmark is timed, sync(), fflush(),
+a L2 cache flush, and .5 second delay are all executed.
+Each benchmark is 500000 iterations over 1792-length arrays.
+Times reported are an average of 3 of these benchmark runs.
+
+
+ADDITION BENCHMARKS:
+	Float addition:
+	AVG: 2031753 usecs, or 2.031753 secs.
+	Fixed-point 16.16 addition:
+	AVG: 1975907 usecs, or 1.975907 secs.
+
+SUBTRACTION BENCHMARKS:
+	Float subtraction:
+	AVG: 1919014 usecs, or 1.919014 secs.
+	Fixed-point 16.16 subtraction:
+	AVG: 1945704 usecs, or 1.945704 secs.
+
+MULTIPLICATION BENCHMARKS:
+	Float multiplication:
+	AVG: 1976630 usecs, or 1.976630 secs.
+	Fixed-point 16.16 multiplication:
+	AVG: 3230536 usecs, or 3.230536 secs.
+	Integer multiplication:
+	AVG: 1856133 usecs, or 1.856133 secs.
+
+DIVISION BENCHMARKS:
+	Float Division:
+	AVG: 22728071 usecs, or 22.728071 secs.
+	Fixed-point 16.16 Division:
+	AVG: 38158686 usecs, or 38.158686 secs.
+	Integer Division:
+	AVG: 12061294 usecs, or 12.061294 secs.
+
+SQUARE-ROOT BENCHMARKS:
+	Float Square Root:
+	AVG: 42690226 usecs, or 42.690226 secs.
+	Fixed-point 16.16 Square Root:
+	AVG: 73118807 usecs, or 73.118807 secs.
