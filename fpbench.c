@@ -184,6 +184,7 @@ void bench_subtraction(uint32_t iterations)
 	avg_of_3_runs(&bench_float_sub, iterations);
 	printf("\tFixed-point 16.16 subtraction:\n\t");
 	avg_of_3_runs(&bench_fixed_sub, iterations);
+	printf("\tNote: skipping integer timing; will be same as fixed-point.\n");
 }
 
 void bench_float_add(uint32_t iterations)
@@ -212,6 +213,7 @@ void bench_addition(uint32_t iterations)
 	avg_of_3_runs(&bench_float_add, iterations);
 	printf("\tFixed-point 16.16 addition:\n\t");
 	avg_of_3_runs(&bench_fixed_add, iterations);
+	printf("\tNote: skipping integer timing; will be same as fixed-point.\n");
 }
 
 void bench_float_mul(uint32_t iterations)
@@ -337,8 +339,8 @@ int main(int argc, char **argv)
 	printf("Written by Dan Silsby  dansilsby <AT> gmail <DOT> com\n");
 	printf("NOTE: before each benchmark is timed, sync(), fflush(),\n"
 			"a L2 cache flush, and .5 second delay are all executed.\n");
-	printf("Each benchmark is %u iterations over %u-length arrays.\n", iterations, ASIZE);
-	printf("Times reported are an average of 3 of these benchmark runs.\n");
+	printf("Times reported are an average of 3 of these benchmark runs.\n\n");
+	printf("Benchmark requested: %u iterations over %u-length arrays.\n", iterations, ASIZE);
 	printf("Reported sizeof(float) on this architecture: %d\n\n", sizeof(float));
 
 	bench_addition(iterations);
