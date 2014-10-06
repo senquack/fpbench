@@ -339,7 +339,7 @@ int main(int argv, char **argc)
 			"a L2 cache flush, and .5 second delay are all executed.\n");
 	printf("Each benchmark is %u iterations over %u-length arrays.\n", iterations, ASIZE);
 	printf("Times reported are an average of 3 of these benchmark runs.\n");
-	printf("Reported float sizeof() on this architecture: %d\nn", sizeof(float));
+	printf("Reported sizeof(float) on this architecture: %d\n\n", sizeof(float));
 
 	bench_addition(iterations);
 	bench_subtraction(iterations);
