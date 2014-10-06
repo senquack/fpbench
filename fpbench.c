@@ -338,7 +338,8 @@ int main(int argv, char **argc)
 	printf("NOTE: before each benchmark is timed, sync(), fflush(),\n"
 			"a L2 cache flush, and .5 second delay are all executed.\n");
 	printf("Each benchmark is %u iterations over %u-length arrays.\n", iterations, ASIZE);
-	printf("Times reported are an average of 3 of these benchmark runs.\n\n");
+	printf("Times reported are an average of 3 of these benchmark runs.\n");
+	printf("Reported float sizeof() on this architecture: %d\nn", sizeof(float));
 
 	bench_addition(iterations);
 	bench_subtraction(iterations);
