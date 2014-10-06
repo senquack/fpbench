@@ -322,15 +322,15 @@ void bench_squareroot(uint32_t iterations)
 }
 
 
-int main(int argv, char **argc)
+int main(int argc, char **argv)
 {
 	srand(time(NULL));
 	uint32_t iterations = 0;
-	if (argv < 2) {
+	if (argc < 2) {
 		printf("Missing argument: number of iterations\n");
 		return 1;
 	} else {
-		iterations = atoi(argc[1]);
+		iterations = atoi(argv[1]);
 	}
 
 	printf("32-bit Floating Point vs. 16.16 Fixed-point Math Speed Comparison\n");
