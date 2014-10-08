@@ -6,7 +6,7 @@ PROG   = $(NAME)
 #CC =	gcc
 CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
 
-LDFLAGS =	-lrt
+LDFLAGS =	-lm
 
 #CFLAGS =	-DPENTIUM_M -Wall -std=gnu99 -O3 -funroll-loops -march=pentium-m -mtune=pentium-m 
 CFLAGS = -Wall -std=gnu99 -O2 -funroll-loops 
