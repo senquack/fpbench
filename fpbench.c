@@ -6,21 +6,27 @@
 #include <math.h>
 #include <sys/time.h>
 
-// There will be two arrays of test data for each test, and each will be sized so that, combined,
-//	they will not exceed the 16KB data cache of the GCW Zero:
-//  sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
-//	Thanks to Nebuleon for the advice.
-#define ASIZE	1792	
-#ifdef PENTIUM_M
-#define CACHE_SIZE_IN_WORDS 524288	// this is for my penium-M with 2MB cache
-#else
-#define CACHE_SIZE_IN_WORDS 65536	// Size of L2 cache in words, this is for a 256KB 32-bit L2 cache
-#endif
+/* There will be two arrays of test data for each test, and one results array.
+ *	Each will test data array will be sized so that, combined, they will not exceed 
+ *	the 16KB data cache of the GCW Zero:
+ * sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
+ *	Thanks to Nebuleon for the advice.	*/
+#define ASIZE_32BIT	1792	
+#define ASIZE_64BIT	(ASIZE_32BIT/2)
 
-float fval1[ASIZE], fval2[ASIZE], fresult[ASIZE];		// Float arrays: first operands, second operands, results
-int32_t xval1[ASIZE], xval2[ASIZE], xresult[ASIZE];	// 16.16 Fixed-point arrays: first operands, second operands, results
-static uint32_t dummy_array[CACHE_SIZE_IN_WORDS];	// Dummy array for flushing of 256KB L2 and 16KB L1 d-cache
+//#ifdef PENTIUM_M
+//#define CACHE_SIZE_IN_WORDS 524288	// this is for my penium-M with 2MB cache
+//#else
+//#define CACHE_SIZE_IN_WORDS 65536	// Size of L2 cache in words, this is for a 256KB 32-bit L2 cache
+//#endif
 
+// In these arrays: *val1: first operands, *val2: second operands, *result: results of operation
+float		fval1[ASIZE_32BIT], fval2[ASIZE_32BIT], fresult[ASIZE_32BIT];	// Float arrays
+int32_t	xval1[ASIZE_32BIT], xval2[ASIZE_32BIT], xresult[ASIZE_32BIT];	// 16.16 Fixed-point array
+double	dval1[ASIZE_64BIT], dval2[ASIZE_64BIT], dresult[ASIZE_64BIT];	// Double arrays
+uint32_t	i32val1[ASIZE_32BIT], i32val2[ASIZE_32BIT], i32result[ASIZE_32BIT];	// 32-bit int arrays
+uint64_t	i64val1[ASIZE_64BIT], i64val2[ASIZE_64BIT], i64result[ASIZE_64BIT];	// 64-bit int arrays	
+//uint32_t dummy_array[CACHE_SIZE_IN_WORDS];	// Dummy array for flushing of L1, L2 caches
 
 // Fixed-point math routines:
 #define f2x(x) ((int)((x) * 65536.0f))	 // convert float to 16.16 fixed point
@@ -47,15 +53,47 @@ unsigned int fpsqrt (unsigned int n)
     iter1 ( 7);    iter1 ( 6);    iter1 ( 5);    iter1 ( 4);
     iter1 ( 3);    iter1 ( 2);    iter1 ( 1);    iter1 ( 0);
 //    return root >> 1;
-    return root << 7;	//senquack - convert to 16.16 fixed point while also dividing by 2
+    return root << 7;	// convert to 16.16 fixed point while also dividing by 2
 }
 
-void flush_cache()
+// the famous Quake square root
+float magic_sqrt (float number)
 {
-	for (int i = 0; i < CACHE_SIZE_IN_WORDS; i++) {
-		dummy_array[i] = rand();
-	}
+   int32_t i;
+   float f = 1.5, x = number/2, y = number;
+   i  = * ( unsigned long * ) &y;
+   i   = 0x5f3759df - ( i >> 1 );
+   y = * ( float * ) &i;
+   y = y * (f - x*y*y);
+   return number * y;
 }
+
+// 64-bit double approximation of square root:
+// (credit to http://www.azillionmonkeys.com/qed/sqroot.html)
+double approximate_double_sqrt (double y) 
+{
+	double x, z, tempf;
+	unsigned long *tfptr = ((unsigned long *)&tempf) + 1;
+
+	tempf = y;
+	*tfptr = (0xbfcdd90a - *tfptr)>>1; /* estimate of 1/sqrt(y) */
+	x =  tempf;
+	z =  y*0.5;                        /* hoist out the "/2"    */
+	x = (1.5*x) - (x*x)*(x*z);         /* iteration formula     */
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	x = (1.5*x) - (x*x)*(x*z);
+	return x*y;
+}
+
+//// Flush both L1 and L2 caches:
+//void flush_cache()
+//{
+//	for (int i = 0; i < CACHE_SIZE_IN_WORDS; i++) {
+//		dummy_array[i] = lrand48();
+//	}
+//}
 
 uint64_t timer(int begin)
 {
@@ -65,7 +103,7 @@ uint64_t timer(int begin)
 		// Begin timing and exit:
 		sync();
 		fflush(NULL);
-		flush_cache();
+//		flush_cache();
 		usleep(500000);
 		gettimeofday(&begin_time,NULL);
 		return 0;
@@ -78,7 +116,7 @@ uint64_t timer(int begin)
 	return usecs;
 }
 
-uint64_t avg_of_3_runs(void (*benchmark)(uint32_t), int iterations)
+uint64_t avg_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
 {
 	uint64_t a,b,c, avg_time;
 	timer(1);
@@ -95,103 +133,98 @@ uint64_t avg_of_3_runs(void (*benchmark)(uint32_t), int iterations)
 	return avg_time;
 }
 
-void fill_float_array(float *array, int all_positive)
+/* Fill data array with random distribution of numbers within min_range-max_range. */
+void fill_float_array(float *array, double min_range, double max_range)
 {
-	// Fill data array with fairly random distribution of numbers less than the value of 32768 (max a 16.16 FP can hold)
-	for (int i = 0; i < ASIZE; i++) {
-		int x,y;
-		x = rand() + 1;
-		y = rand() + 1;
-		if (!all_positive) {
-			x *= (rand() % 2) ? -1 : 1;	// Random distribution of negative values
-			y *= (rand() % 2) ? -1 : 1;	// Random distribution of negative values
+	for (int i = 0; i < ASIZE_32BIT; i++) {
+		double tmp = drand48();	// Start with a random double between 0 and 1.0
+		tmp *= (lrand48() % 2) ? 1.0 : max_range;	// Number has a 50% chance of being left this small value
+
+		while (tmp < min_range) {
+			tmp = drand48() * max_range;			// get a new number if it was below min_range
 		}
-		array[i] = (float)x / (float)y;
-		// At this point, the numbers are not very large at all: randomly increase or decrease them:
-		switch(rand() % 3) {
-			case 0:
-				// Number has a one-in-three chance of becoming larger:
-				array[i] *= (rand() % 5000 + 1);	
-				if (array[i] >= 32767) {
-					array[i] = 16384.16384;	// Nice median value
-				} else if (array[i] <= -32767) {
-					array[i] = -16384.16384;	// Nice median value
-				}
-				break;
-			case 2:
-				// Number has a one-in-three chance of becoming smaller:
-				array[i] /= (rand()%10 + 1);	
-				break;
-			case 3:
-				// Number has a one-in-three chance of being left along
-				break;
-			default:
-				break;
-		}
-		if (array[i] == 0.0) array[i] = 0.12345; // We don't want any zeroes in the array
-//		printf("n:%f\n", array[i]);
+		
+		array[i] = (float)tmp;
 	}
 }
 
 void fill_fixed_array_from_float_array(int32_t *fixed_array, float *float_array)
 {
-//	int num_corrections = 0;
-	for (int i = 0; i < ASIZE; i++) {
+	for (int i = 0; i < ASIZE_32BIT; i++) {
 		fixed_array[i] = f2x(float_array[i]);
-//		if (FNUM2INT(fixed_array[i]) == 0) {
-//			printf("Replacing 0 in fixed array with dummy value..\n");
-//			printf("Old fixed-point value: %u, converted to int: %d\n", fixed_array[i], FNUM2INT(fixed_array[i]));
-//			fixed_array[i] = f2x(314.159);	// don't want any zeroes in the array
-//			num_corrections++;
-//		}
 	}
-//	printf("number of corrections: %d\n", num_corrections);
 }
 
-void fill_arrays()
+/* Fill data array with random distribution of numbers within min_range-max_range. */
+void fill_double_array(double *array, double min_range, double max_range)
 {
-	/* NOTE: one of the arrays will have some numbers negative, the other array will have all positive:
-	  	(fval1, for use with square root benchmark) */
-	fill_float_array(fval1, 1);	// The 1 signifies that all values will be positive in this array
-	fill_float_array(fval2, 0);
-	fill_fixed_array_from_float_array(xval1, fval1);	
-	fill_fixed_array_from_float_array(xval2, fval2);
-}
+	for (int i = 0; i < ASIZE_64BIT; i++) {
+		double tmp = drand48();	// Start with a random double between 0 and 1.0
+		tmp *= (lrand48() % 2) ? 1.0 : max_range;	// Number has a 50% chance of being left a small value
 
-void bench_float_sub(uint32_t iterations)
-{
-	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
-			fresult[i] = fval1[i] - fval2[i];
+		while (tmp < min_range) {
+			tmp = drand48() * max_range;			// get a new number if it was below min_range
 		}
+				
+		array[i] = tmp;
 	}
 }
 
-void bench_fixed_sub(uint32_t iterations)
+/* Fill data array with random distribution of numbers within 1 to max_range.
+ * Range specifications are limited in practicality to a choice of 2^32 or 2^16 
+ */
+void fill_i32_array(uint32_t *array, uint32_t max_range)
 {
-	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
-			xresult[i] = xval1[i] - xval2[i];
+	for (int i = 0; i < ASIZE_32BIT; i++) {
+		uint32_t tmp = 1;		// Ensure no division by zero
+		if (max_range > 0xFFFF) {
+			tmp = lrand48();	// Assign random 32-bit non-negative int
+		} else {
+			tmp = lrand48() % 0x10000;
 		}
+
+		if (tmp == 0) tmp++;		// Ensure no division-by-zero
+		array[i] = tmp;
 	}
 }
 
-void bench_subtraction(uint32_t iterations)
+/* Fill data array with random distribution of numbers within 1 to max_range.
+ * Range specifications are limited in practicality to a choice of 2^64, 2^32, 2^16 
+ */
+void fill_i64_array(uint64_t *array, uint64_t max_range)
 {
-	fill_arrays();	
-	printf("\nSUBTRACTION BENCHMARKS:\n");
-	printf("\tFloat subtraction:\n\t");
-	avg_of_3_runs(&bench_float_sub, iterations);
-	printf("\tFixed-point 16.16 subtraction:\n\t");
-	avg_of_3_runs(&bench_fixed_sub, iterations);
-	printf("\tNote: skipping integer timing; will be same as fixed-point.\n");
+	for (int i = 0; i < ASIZE_64BIT; i++) {
+		uint64_t tmp = 1;
+		if (max_range > 0xFFFFFFFF) {				// Is our range greater than 2^32?
+			tmp = (uint64_t)lrand48() << 32;		// 	Assign a random 32-bit number to upper half
+			tmp |= (uint64_t)lrand48();			// 	And assign one to the lower half.
+		} else if (max_range > 0xFFFF) {			// Is our range greater than 2^16?
+			tmp = lrand48();							//		Assign random 32-bit number just to lower half.
+		} else {
+			tmp = lrand48() % 0x10000;		// Our range must be 1-2^16 
+		}
+
+		if (tmp == 0) tmp++;		// Ensure no division-by-zero
+		array[i] = tmp;
+	}
 }
 
 void bench_float_add(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			fresult[i] = fval1[i] + fval2[i];
+		}
+	}
+}
+
+void bench_double_add(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			dresult[i] = dval1[i] + dval2[i];
 		}
 	}
 }
@@ -199,28 +232,75 @@ void bench_float_add(uint32_t iterations)
 void bench_fixed_add(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			xresult[i] = xval1[i] + xval2[i];
+		}
+	}
+}
+
+void bench_i32_add(uint32_t iterations)
+{
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
+			i32result[i] = i32val1[i] + i32val2[i];
+		}
+	}
+}
+
+void bench_i64_add(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			i64result[i] = i64val1[i] + i64val2[i];
 		}
 	}
 }
 
 void bench_addition(uint32_t iterations)
 {
-	fill_arrays();	
 	printf("\nADDITION BENCHMARKS:\n");
-	printf("\tFloat addition:\n\t");
+	printf("Float:\n\t");
+	fill_float_array(fval1, 0.0001, 16383.0);		
+	fill_float_array(fval2, 0.0001, 16383.0);		
 	avg_of_3_runs(&bench_float_add, iterations);
-	printf("\tFixed-point 16.16 addition:\n\t");
+	printf("Double:\n\t");
+	fill_double_array(dval1, 0.0001, 16383.0);		
+	fill_double_array(dval2, 0.0001, 16383.0);		
+	avg_of_3_runs(&bench_double_add, iterations);
+	printf("Fixed-point 16.16:\n\t");
+	fill_float_array(fval1, 0.0001, 16383.0);		
+	fill_float_array(fval2, 0.0001, 16383.0);		
+	fill_fixed_array_from_float_array(xval1, fval1);
+	fill_fixed_array_from_float_array(xval2, fval2);
 	avg_of_3_runs(&bench_fixed_add, iterations);
-	printf("\tNote: skipping integer timing; will be same as fixed-point.\n");
+	printf("32-bit integer:\n\t");
+	fill_i32_array(i32val1, 0xFFFFFFFF);
+	fill_i32_array(i32val2, 0xFFFFFFFF);	
+	avg_of_3_runs(&bench_i32_add, iterations);
+	printf("64-bit integer:\n\t");
+	fill_i64_array(i64val1, 0xFFFFFFFFFFFFFFFF);
+	fill_i64_array(i64val2, 0xFFFFFFFFFFFFFFFF);
+	avg_of_3_runs(&bench_i64_add, iterations);
 }
 
 void bench_float_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			fresult[i] = fval1[i] * fval2[i];
+		}
+	}
+}
+
+void bench_double_mul(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			dresult[i] = dval1[i] * dval2[i];
 		}
 	}
 }
@@ -228,39 +308,75 @@ void bench_float_mul(uint32_t iterations)
 void bench_fixed_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			xresult[i] = FMUL(xval1[i], xval2[i]);
 		}
 	}
 }
 
-void bench_integer_mul(uint32_t iterations)
+void bench_i32_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
-			xresult[i] = xval1[i] * xval2[i];
+		for (int i=0; i < ASIZE_32BIT; i++) {
+			i32result[i] = i32val1[i] * i32val2[i];
+		}
+	}
+}
+
+void bench_i64_mul(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			i64result[i] = i64val1[i] * i64val2[i];
 		}
 	}
 }
 
 void bench_multiplication(uint32_t iterations)
 {
-	fill_arrays();	
 	printf("\nMULTIPLICATION BENCHMARKS:\n");
-	printf("\tFloat multiplication:\n\t");
+	printf("Float:\n\t");
+	fill_float_array(fval1, 0.001, 181.0);		
+	fill_float_array(fval2, 0.001, 181.0);
 	avg_of_3_runs(&bench_float_mul, iterations);
-	bench_float_mul(iterations);
-	printf("\tFixed-point 16.16 multiplication:\n\t");
+	printf("Double:\n\t");
+	fill_double_array(dval1, 0.001, 181.0);		
+	fill_double_array(dval2, 0.001, 181.0);
+	avg_of_3_runs(&bench_double_mul, iterations);
+	printf("Fixed-point:\n\t");
+	fill_float_array(fval1, 0.001, 181.0);		// Don't want overflow
+	fill_float_array(fval2, 0.001, 181.0);
+	fill_fixed_array_from_float_array(xval1, fval1);
+	fill_fixed_array_from_float_array(xval2, fval2);
 	avg_of_3_runs(&bench_fixed_mul, iterations);
-	printf("\tInteger multiplication:\n\t");
-	avg_of_3_runs(&bench_integer_mul, iterations);
+	printf("32-bit integer:\n\t");
+	fill_i32_array(i32val1, 0xFFFF);
+	fill_i32_array(i32val2, 0xFFFF);
+	avg_of_3_runs(&bench_i32_mul, iterations);
+	printf("64-bit integer:\n\t");
+	fill_i64_array(i64val1, 0xFFFFFFFF);
+	fill_i64_array(i64val2, 0xFFFFFFFF);
+	avg_of_3_runs(&bench_i64_mul, iterations);
 }
 
 void bench_float_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			fresult[i] = fval1[i] / fval2[i];
+		}
+	}
+}
+
+void bench_double_div(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			dresult[i] = dval1[i] / dval2[i];
 		}
 	}
 }
@@ -268,38 +384,105 @@ void bench_float_div(uint32_t iterations)
 void bench_fixed_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			xresult[i] = FDIV(xval1[i], xval2[i]);
 		}
 	}
 }
 
-void bench_integer_div(uint32_t iterations)
+void bench_i32_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
-			xresult[i] = xval1[i] / xval2[i];
+		for (int i=0; i < ASIZE_32BIT; i++) {
+			i32result[i] = i32val1[i] / i32val2[i];
 		}
 	}
 }
 
+void bench_i64_div(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			i64result[i] = i64val1[i] / i64val2[i];
+		}
+	}
+}
+
+
 void bench_division(uint32_t iterations)
 {
-	fill_arrays();	
 	printf("\nDIVISION BENCHMARKS:\n");
-	printf("\tFloat Division:\n\t");
+
+	printf("Float:\n\t");
+//	fill_float_array(fval1, 0, 0.001, 1048576);
+//	fill_float_array(fval2, 0, 0.001, 1048576);
+	fill_float_array(fval1, 1, 3072);
+	fill_float_array(fval2, 0.1, 4096);
 	avg_of_3_runs(&bench_float_div, iterations);
-	printf("\tFixed-point 16.16 Division:\n\t");
+
+	printf("Double:\n\t");
+//	fill_double_array(dval1, 0, 0.001, 4294967296);
+//	fill_double_array(dval2, 0, 0.001, 4294967296);
+	fill_double_array(dval1, 1, 3072);
+	fill_double_array(dval2, 0.1, 4096);
+	avg_of_3_runs(&bench_double_div, iterations);
+
+	printf("Fixed-point 16.16:\n\t");
+	fill_float_array(fval1, 1, 3072);		// Don't want overflow
+	fill_float_array(fval2, 0.1, 4096);
+	fill_fixed_array_from_float_array(xval1, fval1);
+	fill_fixed_array_from_float_array(xval2, fval2);
 	avg_of_3_runs(&bench_fixed_div, iterations);
-	printf("\tInteger Division:\n\t");
-	avg_of_3_runs(&bench_integer_div, iterations);
+
+	printf("32-bit integer:\n\t");
+	fill_i32_array(i32val1, 0xFFFFFFFF);
+	fill_i32_array(i32val2, 0xFFFF);
+	avg_of_3_runs(&bench_i32_div, iterations);
+
+	printf("64-bit integer:\n\t");
+	fill_i64_array(i64val1, 0xFFFFFFFFFFFFFFFF);
+	fill_i64_array(i64val2, 0xFFFFFFFF);
+	avg_of_3_runs(&bench_i64_div, iterations);
 }
 
 void bench_float_sqrt(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			fresult[i] = sqrtf(fval1[i]);
+		}
+	}
+}
+
+void bench_quake_sqrt(uint32_t iterations)
+{
+	for (int iter = 0; iter < iterations; iter++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
+			fresult[i] = magic_sqrt(fval1[i]);
+		}
+	}
+}
+
+void bench_double_sqrt(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {		
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			dresult[i] = sqrt(dval1[i]);
+		}
+	}
+}
+
+void bench_approximate_double_sqrt(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	iterations *= 2;
+	for (int iter = 0; iter < iterations; iter++) {		
+		for (int i=0; i < ASIZE_64BIT; i++) {
+			dresult[i] = approximate_double_sqrt(dval1[i]);
 		}
 	}
 }
@@ -307,7 +490,7 @@ void bench_float_sqrt(uint32_t iterations)
 void bench_fixed_sqrt(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
-		for (int i=0; i < ASIZE; i++) {
+		for (int i=0; i < ASIZE_32BIT; i++) {
 			xresult[i] = FSQRT(xval1[i]);
 		}
 	}
@@ -315,18 +498,35 @@ void bench_fixed_sqrt(uint32_t iterations)
 
 void bench_squareroot(uint32_t iterations)
 {
-	fill_arrays();	
 	printf("\nSQUARE-ROOT BENCHMARKS:\n");
-	printf("\tFloat Square Root:\n\t");
+	fill_float_array(fval1, 0.00001, 32768);
+	printf("Float:\n\t");
 	avg_of_3_runs(&bench_float_sqrt, iterations);
-	printf("\tFixed-point 16.16 Square Root:\n\t");
+
+//	fill_float_array(fval1, 0.00001, 32768);	// Do a direct comparison of above
+	printf("Float (Quake sqrt):\n\t");
+	avg_of_3_runs(&bench_quake_sqrt, iterations);
+
+//	fill_float_array(fval1, 0.00001, 32768);	// Do a direct comparison of above
+	fill_fixed_array_from_float_array(xval1, fval1);
+	printf("Fixed-point 16.16:\n\t");
 	avg_of_3_runs(&bench_fixed_sqrt, iterations);
+
+	fill_double_array(dval1, 0.00001, 32768);
+	printf("Double:\n\t");
+	avg_of_3_runs(&bench_double_sqrt, iterations);
+
+//	fill_double_array(dval1, 0.00001, 32768);	// Do a direct comparison of above
+	printf("Double (approximate sqrt):\n\t");
+	avg_of_3_runs(&bench_approximate_double_sqrt, iterations);
+
 }
 
 int main(int argc, char **argv)
 {
-	srand(time(NULL));
-	uint32_t iterations = 0;
+	srand48(time(NULL));	// Seed RNG
+
+	unsigned int iterations = 0;
 	if (argc < 2) {
 		printf("Missing argument: number of iterations\n");
 		return 1;
@@ -337,17 +537,21 @@ int main(int argc, char **argv)
 	printf("32-bit Floating Point vs. 16.16 Fixed-point Math Speed Comparison\n");
 	printf("Written by Dan Silsby  dansilsby <AT> gmail <DOT> com\n");
 	printf("NOTE: before each benchmark is timed, sync(), fflush(),\n"
-			"a L2 cache flush, and .5 second delay are all executed.\n");
+			"and .5 second delay are all executed.\n");
 	printf("Times reported are an average of 3 of these benchmark runs.\n\n");
-	printf("Benchmark requested: %u iterations over %u-length arrays.\n", iterations, ASIZE);
-	printf("Reported sizeof(float) on this architecture: %d\n\n", sizeof(float));
+	printf("Benchmark requested: %u iterations.\n", iterations);
+	printf("Reported size of floats on this architecture:\t%d\n", sizeof(float)*8);
+	printf("Reported size of doubles on this architecture:\t%d\n\n", sizeof(double)*8);
 
+	sync();
+	usleep(1000000);
+	
 	bench_addition(iterations);
-	bench_subtraction(iterations);
 	bench_multiplication(iterations);
 	bench_division(iterations);
 	bench_squareroot(iterations);
 
-	// Important: this is to ensure that the flushing of cache via dummy_array is never optimized out:
-	return (dummy_array[0] == dummy_array[CACHE_SIZE_IN_WORDS-1]);
+//	// Important: this is to ensure that the flushing of cache via dummy_array is never optimized out:
+//	return (dummy_array[0] == dummy_array[CACHE_SIZE_IN_WORDS-1]);
+	return 0;
 }
