@@ -7,7 +7,7 @@
 #include <sys/time.h>
 
 /* There will be two arrays of test data for each test, and one results array.
- *	Each will test data array will be sized so that, combined, they will not exceed 
+ *	Each test data array will be sized so that, combined, they will not exceed 
  *	the 16KB data cache of the GCW Zero:
  * sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
  *	Thanks to Nebuleon for the advice.	*/
@@ -15,7 +15,7 @@
 #define ASIZE_64BIT	(ASIZE_32BIT/2)
 
 //#ifdef PENTIUM_M
-//#define CACHE_SIZE_IN_WORDS 524288	// this is for my penium-M with 2MB cache
+//#define CACHE_SIZE_IN_WORDS 524288	// this is for my pentium-M with 2MB cache
 //#else
 //#define CACHE_SIZE_IN_WORDS 65536	// Size of L2 cache in words, this is for a 256KB 32-bit L2 cache
 //#endif
@@ -29,11 +29,11 @@ uint64_t	i64val1[ASIZE_64BIT], i64val2[ASIZE_64BIT], i64result[ASIZE_64BIT];	// 
 //uint32_t dummy_array[CACHE_SIZE_IN_WORDS];	// Dummy array for flushing of L1, L2 caches
 
 // Fixed-point math routines:
-#define f2x(x) ((int)((x) * 65536.0f))	 // convert float to 16.16 fixed point
+#define f2x(x) ((int32_t)((x) * 65536.0f))	 // convert float to 16.16 fixed point
 #define x2f(x) ((float)(x) / 65536.0f)	// convert fixed point 16.16 to float
 #define INT2FNUM(x) ((x)<<16) // Convert from 32-bit int to fixed number
 #define FNUM2INT(x) ((x)>>16) // Convert from fixed number to 32-bit int
-#define FMUL(x,y) (int)(((long long)(x)*(y))>>16)
+#define FMUL(x,y) (int32_t)(((int64_t)(x)*(y))>>16)
 #define FDIV(x,y) (int32_t)(((int64_t)x << 16) / y)
 #define FSQRT(x) fpsqrt(x)
 
