@@ -11,7 +11,7 @@
  *	the 16KB data cache of the GCW Zero:
  * sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
  *	Thanks to Nebuleon for the advice.	*/
-#define ASIZE_32BIT	1792	
+#define ASIZE_32BIT	1792					// NOTE: this must be a multiple of 4
 #define ASIZE_64BIT	(ASIZE_32BIT/2)
 
 //#ifdef PENTIUM_M
@@ -209,10 +209,23 @@ void fill_i64_array(uint64_t *array, uint64_t max_range)
 	}
 }
 
+//void bench_float_add(uint32_t iterations)
+//{
+//	for (int iter = 0; iter < iterations; iter++) {
+//		for (int i=0; i < ASIZE_32BIT; i++) {
+//			fresult[i] = fval1[i] + fval2[i];
+//		}
+//	}
+//}
 void bench_float_add(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			fresult[i] = fval1[i] + fval2[i];	 i++;
+			fresult[i] = fval1[i] + fval2[i];	 i++;
+			fresult[i] = fval1[i] + fval2[i];	 i++;
+#endif
 			fresult[i] = fval1[i] + fval2[i];
 		}
 	}
@@ -224,6 +237,11 @@ void bench_double_add(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			dresult[i] = dval1[i] + dval2[i];	 i++;
+			dresult[i] = dval1[i] + dval2[i];	 i++;
+			dresult[i] = dval1[i] + dval2[i];	 i++;
+#endif
 			dresult[i] = dval1[i] + dval2[i];
 		}
 	}
@@ -233,6 +251,11 @@ void bench_fixed_add(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			xresult[i] = xval1[i] + xval2[i];	 i++;
+			xresult[i] = xval1[i] + xval2[i];	 i++;
+			xresult[i] = xval1[i] + xval2[i];	 i++;
+#endif
 			xresult[i] = xval1[i] + xval2[i];
 		}
 	}
@@ -242,6 +265,11 @@ void bench_i32_add(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			i32result[i] = i32val1[i] + i32val2[i];	 i++;
+			i32result[i] = i32val1[i] + i32val2[i];	 i++;
+			i32result[i] = i32val1[i] + i32val2[i];	 i++;
+#endif
 			i32result[i] = i32val1[i] + i32val2[i];
 		}
 	}
@@ -253,6 +281,11 @@ void bench_i64_add(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			i64result[i] = i64val1[i] + i64val2[i];	 i++;
+			i64result[i] = i64val1[i] + i64val2[i];	 i++;
+			i64result[i] = i64val1[i] + i64val2[i];	 i++;
+#endif
 			i64result[i] = i64val1[i] + i64val2[i];
 		}
 	}
@@ -269,13 +302,13 @@ void bench_addition(uint32_t iterations)
 	fill_double_array(dval1, 0.0001, 16383.0);		
 	fill_double_array(dval2, 0.0001, 16383.0);		
 	avg_of_3_runs(&bench_double_add, iterations);
-	printf("Fixed-point 16.16:\n\t");
+	printf("Fixed-point 16.16 (signed 32-bit integer):\n\t");
 	fill_float_array(fval1, 0.0001, 16383.0);		
 	fill_float_array(fval2, 0.0001, 16383.0);		
 	fill_fixed_array_from_float_array(xval1, fval1);
 	fill_fixed_array_from_float_array(xval2, fval2);
 	avg_of_3_runs(&bench_fixed_add, iterations);
-	printf("32-bit integer:\n\t");
+	printf("32-bit (unsigned) integer:\n\t");
 	fill_i32_array(i32val1, 0xFFFFFFFF);
 	fill_i32_array(i32val2, 0xFFFFFFFF);	
 	avg_of_3_runs(&bench_i32_add, iterations);
@@ -289,6 +322,11 @@ void bench_float_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			fresult[i] = fval1[i] * fval2[i];	i++;
+			fresult[i] = fval1[i] * fval2[i];	i++;
+			fresult[i] = fval1[i] * fval2[i];	i++;
+#endif
 			fresult[i] = fval1[i] * fval2[i];
 		}
 	}
@@ -300,6 +338,11 @@ void bench_double_mul(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			dresult[i] = dval1[i] * dval2[i];	i++;
+			dresult[i] = dval1[i] * dval2[i];	i++;
+			dresult[i] = dval1[i] * dval2[i];	i++;
+#endif
 			dresult[i] = dval1[i] * dval2[i];
 		}
 	}
@@ -309,6 +352,11 @@ void bench_fixed_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			xresult[i] = FMUL(xval1[i], xval2[i]);		i++;
+			xresult[i] = FMUL(xval1[i], xval2[i]);		i++;
+			xresult[i] = FMUL(xval1[i], xval2[i]);		i++;
+#endif
 			xresult[i] = FMUL(xval1[i], xval2[i]);
 		}
 	}
@@ -318,6 +366,11 @@ void bench_i32_mul(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			i32result[i] = i32val1[i] * i32val2[i];	i++;
+			i32result[i] = i32val1[i] * i32val2[i];	i++;
+			i32result[i] = i32val1[i] * i32val2[i];	i++;
+#endif
 			i32result[i] = i32val1[i] * i32val2[i];
 		}
 	}
@@ -329,6 +382,11 @@ void bench_i64_mul(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			i64result[i] = i64val1[i] * i64val2[i];	i++;
+			i64result[i] = i64val1[i] * i64val2[i];	i++;
+			i64result[i] = i64val1[i] * i64val2[i];	i++;
+#endif
 			i64result[i] = i64val1[i] * i64val2[i];
 		}
 	}
@@ -365,6 +423,11 @@ void bench_float_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			fresult[i] = fval1[i] / fval2[i];	i++;
+			fresult[i] = fval1[i] / fval2[i];	i++;
+			fresult[i] = fval1[i] / fval2[i];	i++;
+#endif
 			fresult[i] = fval1[i] / fval2[i];
 		}
 	}
@@ -376,6 +439,11 @@ void bench_double_div(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			dresult[i] = dval1[i] / dval2[i];	i++;
+			dresult[i] = dval1[i] / dval2[i];	i++;
+			dresult[i] = dval1[i] / dval2[i];	i++;
+#endif
 			dresult[i] = dval1[i] / dval2[i];
 		}
 	}
@@ -385,6 +453,11 @@ void bench_fixed_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			xresult[i] = FDIV(xval1[i], xval2[i]);		i++;
+			xresult[i] = FDIV(xval1[i], xval2[i]);		i++;
+			xresult[i] = FDIV(xval1[i], xval2[i]);		i++;
+#endif
 			xresult[i] = FDIV(xval1[i], xval2[i]);
 		}
 	}
@@ -394,7 +467,12 @@ void bench_i32_div(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
-			i32result[i] = i32val1[i] / i32val2[i];
+#ifdef MANUAL_UNROLL
+			i32result[i] = i32val1[i] / i32val2[i];	i++;
+			i32result[i] = i32val1[i] / i32val2[i];	i++;
+			i32result[i] = i32val1[i] / i32val2[i];	i++;
+#endif
+			i32result[i] = i32val1[i] / i32val2[i];	
 		}
 	}
 }
@@ -405,26 +483,26 @@ void bench_i64_div(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			i64result[i] = i64val1[i] / i64val2[i];	i++;
+			i64result[i] = i64val1[i] / i64val2[i];	i++;
+			i64result[i] = i64val1[i] / i64val2[i];	i++;
+#endif
 			i64result[i] = i64val1[i] / i64val2[i];
 		}
 	}
 }
-
 
 void bench_division(uint32_t iterations)
 {
 	printf("\nDIVISION BENCHMARKS:\n");
 
 	printf("Float:\n\t");
-//	fill_float_array(fval1, 0, 0.001, 1048576);
-//	fill_float_array(fval2, 0, 0.001, 1048576);
 	fill_float_array(fval1, 1, 3072);
 	fill_float_array(fval2, 0.1, 4096);
 	avg_of_3_runs(&bench_float_div, iterations);
 
 	printf("Double:\n\t");
-//	fill_double_array(dval1, 0, 0.001, 4294967296);
-//	fill_double_array(dval2, 0, 0.001, 4294967296);
 	fill_double_array(dval1, 1, 3072);
 	fill_double_array(dval2, 0.1, 4096);
 	avg_of_3_runs(&bench_double_div, iterations);
@@ -460,6 +538,11 @@ void bench_quake_sqrt(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			fresult[i] = magic_sqrt(fval1[i]);	i++;
+			fresult[i] = magic_sqrt(fval1[i]);	i++;
+			fresult[i] = magic_sqrt(fval1[i]);	i++;
+#endif
 			fresult[i] = magic_sqrt(fval1[i]);
 		}
 	}
@@ -471,6 +554,11 @@ void bench_double_sqrt(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {		
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			dresult[i] = sqrt(dval1[i]);	i++;
+			dresult[i] = sqrt(dval1[i]);	i++;
+			dresult[i] = sqrt(dval1[i]);	i++;
+#endif
 			dresult[i] = sqrt(dval1[i]);
 		}
 	}
@@ -482,6 +570,11 @@ void bench_approximate_double_sqrt(uint32_t iterations)
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {		
 		for (int i=0; i < ASIZE_64BIT; i++) {
+#ifdef MANUAL_UNROLL
+			dresult[i] = approximate_double_sqrt(dval1[i]);		i++;
+			dresult[i] = approximate_double_sqrt(dval1[i]);		i++;
+			dresult[i] = approximate_double_sqrt(dval1[i]);		i++;
+#endif
 			dresult[i] = approximate_double_sqrt(dval1[i]);
 		}
 	}
@@ -491,6 +584,11 @@ void bench_fixed_sqrt(uint32_t iterations)
 {
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL
+			xresult[i] = FSQRT(xval1[i]);		i++;
+			xresult[i] = FSQRT(xval1[i]);		i++;
+			xresult[i] = FSQRT(xval1[i]);		i++;
+#endif
 			xresult[i] = FSQRT(xval1[i]);
 		}
 	}
@@ -524,7 +622,8 @@ void bench_squareroot(uint32_t iterations)
 
 int main(int argc, char **argv)
 {
-	srand48(time(NULL));	// Seed RNG
+//	srand48(time(NULL));	// Seed RNG
+	srand48(0xDEADBEEF);	// Seed RNG with the same constant always
 
 	unsigned int iterations = 0;
 	if (argc < 2) {
@@ -539,9 +638,12 @@ int main(int argc, char **argv)
 	printf("NOTE: before each benchmark is timed, sync(), fflush(),\n"
 			"and .5 second delay are all executed.\n");
 	printf("Times reported are an average of 3 of these benchmark runs.\n\n");
-	printf("Benchmark requested: %u iterations.\n", iterations);
+#ifdef MANUAL_UNROLL
+	printf("COMPILED WITH MANUAL UNROLLING OF LOOPS\n");
+#endif
 	printf("Reported size of floats on this architecture:\t%d\n", sizeof(float)*8);
-	printf("Reported size of doubles on this architecture:\t%d\n\n", sizeof(double)*8);
+	printf("Reported size of doubles on this architecture:\t%d\n", sizeof(double)*8);
+	printf("Benchmark requested: %u iterations.\n\n", iterations);
 
 	sync();
 	usleep(1000000);
