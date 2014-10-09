@@ -27,7 +27,7 @@ CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
 
 
 # *Strongly* recommended to uncomment one of these for performance:
-#CFLAGS 	+= -funroll-loops		// Generally, this produces loops unrolled to 8 iterations or sometimes slightly more
+#CFLAGS 	+= -funroll-loops		
 #CFLAGS	+= -DMANUAL_UNROLL_4
 CFLAGS	+= -DMANUAL_UNROLL_32
 
