@@ -229,7 +229,6 @@ void bench_float_add(uint32_t iterations)
 			fresult[i] = fval1[i] + fval2[i];	 i++;
 			fresult[i] = fval1[i] + fval2[i];	 i++;
 #elif MANUAL_UNROLL_4
-//#ifdef MANUAL_UNROLL
 			fresult[i] = fval1[i] + fval2[i];	 i++;
 			fresult[i] = fval1[i] + fval2[i];	 i++;
 			fresult[i] = fval1[i] + fval2[i];	 i++;
@@ -277,7 +276,6 @@ void bench_double_add(uint32_t iterations)
 			dresult[i] = dval1[i] + dval2[i];	 i++;
 			dresult[i] = dval1[i] + dval2[i];	 i++;
 			dresult[i] = dval1[i] + dval2[i];	 i++;
-//#ifdef MANUAL_UNROLL
 #elif MANUAL_UNROLL_4
 			dresult[i] = dval1[i] + dval2[i];	 i++;
 			dresult[i] = dval1[i] + dval2[i];	 i++;
