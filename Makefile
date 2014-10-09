@@ -3,27 +3,33 @@ O      = o
 RM     = rm -f
 PROG   = $(NAME)
 
+CFLAGS = -Wall -std=gnu99 -O2 
+LDFLAGS = -lm
+
 # My Pentium-M 32-bit Intel laptop:
 #CC =	gcc
-#CFLAGS = -Wall -std=gnu99 -O2 -funroll-loops -march=pentium-m -mtune=pentium-m 
+#CFLAGS += -march=pentium-m
+#CFLAGS += -mfpmath=sse
 
+
+#BUILDS AVAILABLE:
 # GCW Zero OpenDingux:
 CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
-CFLAGS =  -Wall -std=gnu99 -O2 -funroll-loops 
 
-# Dingoo OpenDingux:
+# Dingoo OpenDingux:			(also used to generate GCW-Zero soft-float version)
 #CC	= /opt/opendingux-toolchain/usr/bin/mipsel-unknown-linux-uclibc-gcc
-#CFLAGS = -static -msoft-float -Wall -std=gnu99 -O2 -funroll-loops 
+#CFLAGS += -static -msoft-float
 
-# Wiz toolchain:
-#CC	= /opt/wiz-toolchain-4.7.3-2/bin/arm-wiz-linux-gnu-gcc
-#CFLAGS = -static -msoft-float -Wall -std=gnu99 -O2 -funroll-loops 
+# Open2x GP2X Toolchain:	Can be used to generate binaries for both Wiz and GP2X
+#CC	= /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
+#CFLAGS += -static -msoft-float -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include
+#LDFLAGS +=	-L/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/lib
 
 
-# Recommended to uncomment this: GCC produces slightly-more unrolled code this way (verified better performance)
-CFLAGS	+= -DMANUAL_UNROLL
-
-LDFLAGS =	-lm
+# *Strongly* recommended to uncomment one of these for performance:
+#CFLAGS 	+= -funroll-loops		// Generally, this produces loops unrolled to 8 iterations or sometimes slightly more
+#CFLAGS	+= -DMANUAL_UNROLL_4
+CFLAGS	+= -DMANUAL_UNROLL_32
 
 OBJS =	$(NAME).$(O) 
 
@@ -35,4 +41,3 @@ asm_output:
 
 clean:
 	$(RM) $(PROG) *.$(O) *.s *.swp .*.swp
-
