@@ -11,7 +11,7 @@
  *	the 16KB data cache of the GCW Zero:
  * sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
  *	Thanks to Nebuleon for the advice.	*/
-#define ASIZE_32BIT	1792					// NOTE: this must be a multiple of 32 to support loop-unrolling #defines
+#define ASIZE_32BIT	1792					// NOTE: this must be a multiple of 64 to support loop-unrolling #defines
 #define ASIZE_64BIT	(ASIZE_32BIT/2)
 
 // In these arrays: *val1: first operands, *val2: second operands, *result: results of operation
@@ -99,9 +99,9 @@ uint64_t timer(int begin)
 	return usecs;
 }
 
-uint64_t avg_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
+uint64_t best_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
 {
-	uint64_t a,b,c, avg_time;
+	uint64_t a,b,c, best_time;
 	timer(1);
 	benchmark(iterations);
 	a = timer(0);
@@ -111,9 +111,13 @@ uint64_t avg_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
 	timer(1);
 	benchmark(iterations);
 	c = timer(0);
-	avg_time = (a + b + c) / 3;
-	printf("AVG: %llu usecs, or %f secs.\n", avg_time, (double)avg_time / 1000000.0);
-	return avg_time;
+
+	best_time = a;
+	if (best_time > b) best_time = b;
+	if (best_time > c) best_time = c;
+	
+	printf("%llu usecs, or \t %f secs\n", best_time, (double)best_time / 1000000.0);
+	return best_time;
 }
 
 /* Fill data array with random distribution of numbers within min_range-max_range. */
@@ -240,7 +244,7 @@ void bench_float_add(uint32_t iterations)
 
 void bench_double_add(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -380,7 +384,7 @@ void bench_i32_add(uint32_t iterations)
 
 void bench_i64_add(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -432,25 +436,25 @@ void bench_addition(uint32_t iterations)
 	printf("Float:\n\t");
 	fill_float_array(fval1, 0.0001, 16383.0);		
 	fill_float_array(fval2, 0.0001, 16383.0);		
-	avg_of_3_runs(&bench_float_add, iterations);
+	best_of_3_runs(&bench_float_add, iterations);
 	printf("Double:\n\t");
 	fill_double_array(dval1, 0.0001, 16383.0);		
 	fill_double_array(dval2, 0.0001, 16383.0);		
-	avg_of_3_runs(&bench_double_add, iterations);
+	best_of_3_runs(&bench_double_add, iterations);
 	printf("Fixed-point 16.16 (signed 32-bit integer):\n\t");
 	fill_float_array(fval1, 0.0001, 16383.0);		
 	fill_float_array(fval2, 0.0001, 16383.0);		
 	fill_fixed_array_from_float_array(xval1, fval1);
 	fill_fixed_array_from_float_array(xval2, fval2);
-	avg_of_3_runs(&bench_fixed_add, iterations);
+	best_of_3_runs(&bench_fixed_add, iterations);
 	printf("32-bit (unsigned) integer:\n\t");
 	fill_i32_array(i32val1, 0xFFFFFFFF);
 	fill_i32_array(i32val2, 0xFFFFFFFF);	
-	avg_of_3_runs(&bench_i32_add, iterations);
+	best_of_3_runs(&bench_i32_add, iterations);
 	printf("64-bit integer:\n\t");
 	fill_i64_array(i64val1, 0xFFFFFFFFFFFFFFFF);
 	fill_i64_array(i64val2, 0xFFFFFFFFFFFFFFFF);
-	avg_of_3_runs(&bench_i64_add, iterations);
+	best_of_3_runs(&bench_i64_add, iterations);
 }
 
 void bench_float_mul(uint32_t iterations)
@@ -501,7 +505,7 @@ void bench_float_mul(uint32_t iterations)
 
 void bench_double_mul(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -641,7 +645,7 @@ void bench_i32_mul(uint32_t iterations)
 
 void bench_i64_mul(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -693,25 +697,25 @@ void bench_multiplication(uint32_t iterations)
 	printf("Float:\n\t");
 	fill_float_array(fval1, 0.001, 181.0);		
 	fill_float_array(fval2, 0.001, 181.0);
-	avg_of_3_runs(&bench_float_mul, iterations);
+	best_of_3_runs(&bench_float_mul, iterations);
 	printf("Double:\n\t");
 	fill_double_array(dval1, 0.001, 181.0);		
 	fill_double_array(dval2, 0.001, 181.0);
-	avg_of_3_runs(&bench_double_mul, iterations);
+	best_of_3_runs(&bench_double_mul, iterations);
 	printf("Fixed-point:\n\t");
 	fill_float_array(fval1, 0.001, 181.0);		// Don't want overflow
 	fill_float_array(fval2, 0.001, 181.0);
 	fill_fixed_array_from_float_array(xval1, fval1);
 	fill_fixed_array_from_float_array(xval2, fval2);
-	avg_of_3_runs(&bench_fixed_mul, iterations);
+	best_of_3_runs(&bench_fixed_mul, iterations);
 	printf("32-bit integer:\n\t");
 	fill_i32_array(i32val1, 0xFFFF);
 	fill_i32_array(i32val2, 0xFFFF);
-	avg_of_3_runs(&bench_i32_mul, iterations);
+	best_of_3_runs(&bench_i32_mul, iterations);
 	printf("64-bit integer:\n\t");
 	fill_i64_array(i64val1, 0xFFFFFFFF);
 	fill_i64_array(i64val2, 0xFFFFFFFF);
-	avg_of_3_runs(&bench_i64_mul, iterations);
+	best_of_3_runs(&bench_i64_mul, iterations);
 }
 
 void bench_float_div(uint32_t iterations)
@@ -762,7 +766,7 @@ void bench_float_div(uint32_t iterations)
 
 void bench_double_div(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -902,7 +906,7 @@ void bench_i32_div(uint32_t iterations)
 
 void bench_i64_div(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -955,29 +959,29 @@ void bench_division(uint32_t iterations)
 	printf("Float:\n\t");
 	fill_float_array(fval1, 1, 3072);
 	fill_float_array(fval2, 0.1, 4096);
-	avg_of_3_runs(&bench_float_div, iterations);
+	best_of_3_runs(&bench_float_div, iterations);
 
 	printf("Double:\n\t");
 	fill_double_array(dval1, 1, 3072);
 	fill_double_array(dval2, 0.1, 4096);
-	avg_of_3_runs(&bench_double_div, iterations);
+	best_of_3_runs(&bench_double_div, iterations);
 
 	printf("Fixed-point 16.16:\n\t");
 	fill_float_array(fval1, 1, 3072);		// Don't want overflow
 	fill_float_array(fval2, 0.1, 4096);
 	fill_fixed_array_from_float_array(xval1, fval1);
 	fill_fixed_array_from_float_array(xval2, fval2);
-	avg_of_3_runs(&bench_fixed_div, iterations);
+	best_of_3_runs(&bench_fixed_div, iterations);
 
 	printf("32-bit integer:\n\t");
 	fill_i32_array(i32val1, 0xFFFFFFFF);
 	fill_i32_array(i32val2, 0xFFFF);
-	avg_of_3_runs(&bench_i32_div, iterations);
+	best_of_3_runs(&bench_i32_div, iterations);
 
 	printf("64-bit integer:\n\t");
 	fill_i64_array(i64val1, 0xFFFFFFFFFFFFFFFF);
 	fill_i64_array(i64val2, 0xFFFFFFFF);
-	avg_of_3_runs(&bench_i64_div, iterations);
+	best_of_3_runs(&bench_i64_div, iterations);
 }
 
 void bench_float_sqrt(uint32_t iterations)
@@ -1074,7 +1078,7 @@ void bench_quake_sqrt(uint32_t iterations)
 
 void bench_double_sqrt(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {		
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -1122,7 +1126,7 @@ void bench_double_sqrt(uint32_t iterations)
 
 void bench_approximate_double_sqrt(uint32_t iterations)
 {
-	// Do twice the number of iterations because our 64-bit array is half as big as the others.
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
 	iterations *= 2;
 	for (int iter = 0; iter < iterations; iter++) {		
 		for (int i=0; i < ASIZE_64BIT; i++) {
@@ -1219,25 +1223,239 @@ void bench_squareroot(uint32_t iterations)
 	printf("\nSQUARE-ROOT BENCHMARKS:\n");
 	fill_float_array(fval1, 0.00001, 32768);
 	printf("Float:\n\t");
-	avg_of_3_runs(&bench_float_sqrt, iterations);
+	best_of_3_runs(&bench_float_sqrt, iterations);
 
 //	fill_float_array(fval1, 0.00001, 32768);	// Do a direct comparison of above
 	printf("Float (Quake sqrt):\n\t");
-	avg_of_3_runs(&bench_quake_sqrt, iterations);
+	best_of_3_runs(&bench_quake_sqrt, iterations);
 
 //	fill_float_array(fval1, 0.00001, 32768);	// Do a direct comparison of above
 	fill_fixed_array_from_float_array(xval1, fval1);
 	printf("Fixed-point 16.16:\n\t");
-	avg_of_3_runs(&bench_fixed_sqrt, iterations);
+	best_of_3_runs(&bench_fixed_sqrt, iterations);
 
 	fill_double_array(dval1, 0.00001, 32768);		// Do a direct comparison of above
 	printf("Double:\n\t");
-	avg_of_3_runs(&bench_double_sqrt, iterations);
+	best_of_3_runs(&bench_double_sqrt, iterations);
 
 //	fill_double_array(dval1, 0.00001, 32768);	// Do a direct comparison of above
 	printf("Double (approximate sqrt):\n\t");
-	avg_of_3_runs(&bench_approximate_double_sqrt, iterations);
+	best_of_3_runs(&bench_approximate_double_sqrt, iterations);
 
+}
+
+void bench_int32_to_float_conversion(uint32_t iterations)
+{
+	uint32_t i;
+	for (uint32_t iter = 0; iter < iterations; iter++) {
+		for (i=0; i < ASIZE_32BIT;) {
+#ifdef MANUAL_UNROLL_32
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;
+#elif MANUAL_UNROLL_4
+			fresult[i] = (float)i32val1[i];	i++;
+			fresult[i] = (float)i32val1[i];	i++;	
+			fresult[i] = (float)i32val1[i];	i++;
+#endif
+			fresult[i] = (float)i32val1[i];	i++;
+		}
+	}
+}
+
+void bench_float_to_int32_conversion(uint32_t iterations)
+{
+	uint32_t i;
+	for (uint32_t iter = 0; iter < iterations; iter++) {
+		for (i=0; i < ASIZE_32BIT; i++) {
+#ifdef MANUAL_UNROLL_32
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+#elif MANUAL_UNROLL_4
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+			i32result[i] = (uint32_t)fval1[i];	i++;
+#endif
+			i32result[i] = (uint32_t)fval1[i];
+		}
+	}
+}
+
+void bench_int32_to_double_conversion(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
+	iterations *= 2;
+
+	uint32_t i;
+	for (uint32_t iter = 0; iter < iterations; iter++) {
+		for (i = 0; i < ASIZE_64BIT;) {
+#ifdef MANUAL_UNROLL_32
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+#elif MANUAL_UNROLL_4
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+			dresult[i] = (double)i32val1[i];	i++;
+#endif
+			dresult[i] = (double)i32val1[i];	i++;
+		}
+	}
+}
+
+void bench_double_to_int32_conversion(uint32_t iterations)
+{
+	// Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
+	iterations *= 2;
+
+	uint32_t i;
+	for (uint32_t iter = 0; iter < iterations; iter++) {
+		for (i = 0; i < ASIZE_64BIT;) {
+#ifdef MANUAL_UNROLL_32
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+#elif MANUAL_UNROLL_4
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+			i32result[i] = (uint32_t)dval1[i];	i++;
+#endif
+			i32result[i] = (uint32_t)dval1[i];	i++;
+		}
+	}
+}
+
+void bench_conversions(uint32_t iterations)
+{
+	printf("\nCONVERSION BENCHMARKS:\n");
+	fill_float_array(fval1, 0.00001, 0xFFFFFFFF);
+	fill_double_array(dval1, 0.00001, 0xFFFFFFFF);
+	fill_i32_array(i32val1, 0xFFFFFFFF);
+	
+	printf("32-bit integer to float:\n\t");
+	best_of_3_runs(&bench_int32_to_float_conversion, iterations);
+
+	printf("32-bit integer to double:\n\t");
+	best_of_3_runs(&bench_int32_to_double_conversion, iterations);
+
+	printf("Float to 32-bit integer:\n\t");
+	best_of_3_runs(&bench_float_to_int32_conversion, iterations);
+
+	printf("Double to 32-bit integer:\n\t");
+	best_of_3_runs(&bench_double_to_int32_conversion, iterations);
 }
 
 int main(int argc, char **argv)
@@ -1275,6 +1493,7 @@ int main(int argc, char **argv)
 	bench_multiplication(iterations);
 	bench_division(iterations);
 	bench_squareroot(iterations);
+	bench_conversions(iterations);
 
 	return 0;
 }
