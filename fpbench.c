@@ -7,11 +7,11 @@
 #include <sys/time.h>
 
 /* There will be two arrays of test data for each test, and one results array.
- *	Each test data array will be sized so that, combined, they will not exceed 
- *	the 16KB data cache of the GCW Zero:
- * sizeof(float) == sizeof(int32_t) == 4; (4 * 1792) * 2 = 14336
+ *	The results and two data arrays will be sized so that, combined, they will not exceed 
+ *	16KB, in order to fit into L1 data cache.
+ * sizeof(float) == sizeof(int32_t) == 4; (4 * 896) * 3 = 10752
  *	Thanks to Nebuleon for the advice.	*/
-#define ASIZE_32BIT	1792					// NOTE: this must be a multiple of 64 to support loop-unrolling #defines
+#define ASIZE_32BIT	896					// NOTE: this must be a multiple of 64 to support loop-unrolling #defines
 #define ASIZE_64BIT	(ASIZE_32BIT/2)
 
 // In these arrays: *val1: first operands, *val2: second operands, *result: results of operation
