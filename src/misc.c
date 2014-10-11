@@ -1,0 +1,145 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/time.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "fpbench.h"
+
+/* timer(1); begins timing and exits, returning 0
+ * timer(0); ends timing and returns time-elapsed-in-microseconds since issuing timer(1) 
+ */
+uint64_t timer(int begin)
+{
+	static struct timeval begin_time = {.tv_sec=0, .tv_usec=0};
+	struct timeval end_time = {.tv_sec=0, .tv_usec=0};
+	if (begin) {
+		// Begin timing and exit:
+		sync();
+		fflush(NULL);
+		usleep(500000);
+		gettimeofday(&begin_time,NULL);
+		return 0;
+	}
+	// End timing and display results:
+	gettimeofday(&end_time,NULL);
+	uint64_t usecs = (end_time.tv_sec * 1000000 + end_time.tv_usec) -
+		(begin_time.tv_sec * 1000000 + begin_time.tv_usec); 
+	return usecs;
+}
+
+/* best_of_3_runs() takes two arguments:
+ * ARG1: Function pointer to a specific benchmark function
+ * ARG2: Number of iterations to pass to said function
+ * RETURN: Time-to-run-in-microseconds of the fastest of three runs of said function.
+ */
+uint64_t best_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
+{
+	uint64_t a,b,c, best_time;
+	timer(1);
+	benchmark(iterations);
+	a = timer(0);
+	timer(1);
+	benchmark(iterations);
+	b = timer(0);
+	timer(1);
+	benchmark(iterations);
+	c = timer(0);
+
+	best_time = a;
+	if (best_time > b) best_time = b;
+	if (best_time > c) best_time = c;
+	
+	printf("\t%llu usecs, or %f secs\n", best_time, (double)best_time / 1000000.0);
+	return best_time;
+}
+
+/* fill_float_array(): Fill data array with random distribution of floats within range min_range-max_range.
+ * ARG1: pointer to float[ASIZE_32BIT] array to fill
+ * ARG2: minimum range of acceptable numbers
+ * ARG3: max range of acceptable numbers
+ */
+void fill_float_array(float *array, double min_range, double max_range)
+{
+	for (int i = 0; i < ASIZE_32BIT; i++) {
+		double tmp = drand48();	// Start with a random double between 0 and 1.0
+		tmp *= (lrand48() % 2) ? 1.0 : max_range;	// Number has a 50% chance of being left this small value
+
+		while (tmp < min_range) {
+			tmp = drand48() * max_range;			// get a new number if it was below min_range
+		}
+		
+		array[i] = (float)tmp;
+	}
+}
+
+/* fill_fixed_array(): Fill data array with fixed-point versions of floats in *float_array.
+ * ARG1: pointer to int32_t[ASIZE_32BIT] array of 16.16 fixed-point numbers to fill
+ * ARG2: pointer to float[ASIZE_32BIT] array to convert from
+ */
+void fill_fixed_array_from_float_array(int32_t *fixed_array, float *float_array)
+{
+	for (int i = 0; i < ASIZE_32BIT; i++) {
+		fixed_array[i] = f2x(float_array[i]);
+	}
+}
+
+/* fill_double_array(): Fill data array with randomly-generated doubles within range min_range-max_range.
+ * ARG1: pointer to double[ASIZE_64BIT] array to fill
+ * ARG2: minimum range of acceptable numbers
+ * ARG3: max range of acceptable numbers
+ */
+void fill_double_array(double *array, double min_range, double max_range)
+{
+	for (int i = 0; i < ASIZE_64BIT; i++) {
+		double tmp = drand48();	// Start with a random double between 0 and 1.0
+		tmp *= (lrand48() % 2) ? 1.0 : max_range;	// Number has a 50% chance of being left a small value
+
+		while (tmp < min_range) {
+			tmp = drand48() * max_range;			// get a new number if it was below min_range
+		}
+				
+		array[i] = tmp;
+	}
+}
+
+/* fill_i32_array(): Fill array with random distribution of 32-bit integers within range 1-max_range.
+ * ARG1: pointer to array of unsigned integers of size ASIZE_32BIT to fill 
+ * ARG2: maximum range: Range can be limited in practicality to a choice of numbers below either 2^32 or 2^16
+ */
+void fill_i32_array(uint32_t *array, uint32_t max_range)
+{
+	for (int i = 0; i < ASIZE_32BIT; i++) {
+		uint32_t tmp = 1;		// Ensure no division by zero
+		if (max_range > 0xFFFF) {
+			tmp = lrand48();	// Assign random 32-bit non-negative int
+		} else {
+			tmp = lrand48() % 0x10000;
+		}
+
+		if (tmp == 0) tmp++;		// Ensure no division-by-zero
+		array[i] = tmp;
+	}
+}
+
+/* fill_i64_array(): Fill array with random distribution of 64-bit integers within range 1-max_range.
+ * ARG1: pointer to array of unsigned integers of size ASIZE_64BIT to fill 
+ * ARG2: maximum range: Range can be limited in practicality to a choice of numbers below either 2^64, 2^32 or 2^16
+ */
+void fill_i64_array(uint64_t *array, uint64_t max_range)
+{
+	for (int i = 0; i < ASIZE_64BIT; i++) {
+		uint64_t tmp = 1;
+		if (max_range > 0xFFFFFFFF) {				// Is our range greater than 2^32?
+			tmp = (uint64_t)lrand48() << 32;		// 	Assign a random 32-bit number to upper half
+			tmp |= (uint64_t)lrand48();			// 	And assign one to the lower half.
+		} else if (max_range > 0xFFFF) {			// Is our range greater than 2^16?
+			tmp = lrand48();							//		Assign random 32-bit number just to lower half.
+		} else {
+			tmp = lrand48() % 0x10000;		// Our range must be 1-2^16 
+		}
+
+		if (tmp == 0) tmp++;		// Ensure no division-by-zero
+		array[i] = tmp;
+	}
+}

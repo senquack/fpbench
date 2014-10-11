@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-////#include <time.h>	// PROBABLY CAN DELETE THIS ONE 
 #include <unistd.h>
-//#include <math.h>
 
 #include "fpbench.h"
 #include "misc.h"
