@@ -21,16 +21,16 @@ LDFLAGS = -lm -lrt
 CFLAGS += -DSELF_ASSIGN
 
 # -----> (GCW ZERO)  OpenDingux:
-#CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
 
 # -----> (IMGTEC CI20 jz4780)
 #CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
 #CFLAGS += -static
 
 # -----> (DINGOO A320) OpenDingux:	(also used to generate GCW-Zero soft-float version)
-CC	= /opt/opendingux-toolchain/usr/bin/mipsel-unknown-linux-uclibc-gcc
-CFLAGS += -static -msoft-float
-CFLAGS += -DNO_MONOTONIC_CLOCK -DSELF_ASSIGN
+#CC	= /opt/opendingux-toolchain/usr/bin/mipsel-unknown-linux-uclibc-gcc
+#CFLAGS += -static -msoft-float
+#CFLAGS += -DNO_MONOTONIC_CLOCK -DSELF_ASSIGN
 
 # -----> (WIZ/GP2X) Open2x GP2X Toolchain
 #CC	= /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
