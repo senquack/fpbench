@@ -9,28 +9,6 @@
 #include "fpbench.h"
 #include "misc.h"
 
-///* timer(1); begins timing and exits, returning 0
-// * timer(0); ends timing and returns time-elapsed-in-microseconds since issuing timer(1) 
-// */
-//uint64_t timer(int begin)
-//{
-//   static struct timeval begin_time = {.tv_sec=0, .tv_usec=0};
-//   struct timeval end_time = {.tv_sec=0, .tv_usec=0};
-//   if (begin) {
-//      // Begin timing and exit:
-//      sync();
-//      fflush(NULL);
-//      usleep(500000);
-//      gettimeofday(&begin_time,NULL);
-//      return 0;
-//   }
-//   // End timing and display results:
-//   gettimeofday(&end_time,NULL);
-//   uint64_t usecs = (end_time.tv_sec * 1000000 + end_time.tv_usec) -
-//      (begin_time.tv_sec * 1000000 + begin_time.tv_usec); 
-//   return usecs;
-//}
-
 /* timer(1); begins timing and exits, returning 0
  * timer(0); ends timing and returns time-elapsed-in-nanoseconds since issuing timer(1) 
  */
@@ -49,7 +27,6 @@ uint64_t timer(int begin)
       if (clock_gettime(CLOCK_MONOTONIC_RAW, &begin_time) == -1)
 #endif
          printf("ERROR: clock_gettime does not support CLOCK_MONOTONIC_RAW\n");
-//      printf("Begin time: %ld sec %ld nanoseconds\n", begin_time.tv_sec, begin_time.tv_nsec);
       return 0;
    }
    // End timing and display results:
@@ -59,11 +36,9 @@ uint64_t timer(int begin)
    if (clock_gettime(CLOCK_MONOTONIC_RAW, &end_time) == -1)
 #endif
       printf("ERROR: clock_gettime does not support CLOCK_MONOTONIC_RAW\n");
-//   printf("End time: %ld sec %ld nanoseconds\n", end_time.tv_sec, end_time.tv_nsec);
    uint64_t begin_nanoseconds = ((uint64_t) begin_time.tv_sec * 1000000000) + begin_time.tv_nsec;
    uint64_t end_nanoseconds = ((uint64_t)end_time.tv_sec * 1000000000) + end_time.tv_nsec;
    uint64_t nanoseconds_taken = end_nanoseconds - begin_nanoseconds;
-//   printf("Operation took: %llu nanoseconds\n", nanoseconds_taken);
    return nanoseconds_taken;
 }
 
@@ -83,32 +58,6 @@ void best_of_2_runs(struct bench_entry *entry, int iterations)
    b = timer(0);
    entry->time = (a < b) ? a : b;
 }
-
-///* best_of_3_runs() takes two arguments:
-// * ARG1: Function pointer to a specific benchmark function
-// * ARG2: Number of iterations to pass to said function
-// * RETURN: Time-to-run-in-microseconds of the fastest of three runs of said function.
-// */
-//uint64_t best_of_3_runs(void (*benchmark)(int), unsigned int iterations)
-//{
-// uint64_t a,b,c, best_time;
-// timer(1);
-// benchmark(iterations);
-// a = timer(0);
-// timer(1);
-// benchmark(iterations);
-// b = timer(0);
-// timer(1);
-// benchmark(iterations);
-// c = timer(0);
-//
-// best_time = a;
-// if (best_time > b) best_time = b;
-// if (best_time > c) best_time = c;
-// 
-// printf("\t%llu usecs, or %f secs\n", best_time, (double)best_time / 1000000.0);
-// return best_time;
-//}
 
 void print_bench_entries(struct bench_entry *bench_entries, int num_entries, 
                            int best_time_index, int iterations)
