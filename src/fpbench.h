@@ -4,18 +4,18 @@
 
 /* There will be two arrays of test data for each test, and one results array.
  * The results and two data arrays will be sized so that, combined, they will not exceed 
- * 16KB, in order to fit into L1 data cache.
- * sizeof(float) == sizeof(int32_t) == 4; (4 * 896) * 3 = 10752
+ * 16KB, preferrably under 14-15KB in order to fit very comfortably into L1 data cache.
+ * sizeof(float) == sizeof(int32_t) == 4; (4 * 1024) * 3 = 12288
  * Thanks to Nebuleon for the advice.  */
-#define ASIZE_32BIT  896               // NOTE: this must be a multiple of 64 to support loop-unrolling #defines
+#define ASIZE_32BIT  1024               // NOTE: this must be a multiple of 64 to support loop-unrolling #defines
 #define ASIZE_64BIT  (ASIZE_32BIT/2)
 
 // In these arrays: *val1: first operands, *val2: second operands, *result: results of operation
 extern float      fval1[ASIZE_32BIT], fval2[ASIZE_32BIT], fresult[ASIZE_32BIT];  // Float arrays
 extern int32_t    xval1[ASIZE_32BIT], xval2[ASIZE_32BIT], xresult[ASIZE_32BIT];  // 16.16 Fixed-point array
 extern double     dval1[ASIZE_64BIT], dval2[ASIZE_64BIT], dresult[ASIZE_64BIT];  // Double arrays
-extern uint32_t   i32val1[ASIZE_32BIT], i32val2[ASIZE_32BIT], i32result[ASIZE_32BIT];  // 32-bit int arrays
-extern uint64_t   i64val1[ASIZE_64BIT], i64val2[ASIZE_64BIT], i64result[ASIZE_64BIT];  // 64-bit int arrays 
+extern int32_t   i32val1[ASIZE_32BIT], i32val2[ASIZE_32BIT], i32result[ASIZE_32BIT];  // 32-bit int arrays
+extern int64_t   i64val1[ASIZE_64BIT], i64val2[ASIZE_64BIT], i64result[ASIZE_64BIT];  // 64-bit int arrays 
 
 // Fixed-point math routines:
 #define f2x(x) ((int32_t)((x) * 65536.0f))    // convert float to 16.16 fixed point

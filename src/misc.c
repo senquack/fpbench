@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/time.h>
+//#include <sys/time.h>
+#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
@@ -8,34 +9,70 @@
 #include "fpbench.h"
 #include "misc.h"
 
+///* timer(1); begins timing and exits, returning 0
+// * timer(0); ends timing and returns time-elapsed-in-microseconds since issuing timer(1) 
+// */
+//uint64_t timer(int begin)
+//{
+//   static struct timeval begin_time = {.tv_sec=0, .tv_usec=0};
+//   struct timeval end_time = {.tv_sec=0, .tv_usec=0};
+//   if (begin) {
+//      // Begin timing and exit:
+//      sync();
+//      fflush(NULL);
+//      usleep(500000);
+//      gettimeofday(&begin_time,NULL);
+//      return 0;
+//   }
+//   // End timing and display results:
+//   gettimeofday(&end_time,NULL);
+//   uint64_t usecs = (end_time.tv_sec * 1000000 + end_time.tv_usec) -
+//      (begin_time.tv_sec * 1000000 + begin_time.tv_usec); 
+//   return usecs;
+//}
+
 /* timer(1); begins timing and exits, returning 0
- * timer(0); ends timing and returns time-elapsed-in-microseconds since issuing timer(1) 
+ * timer(0); ends timing and returns time-elapsed-in-nanoseconds since issuing timer(1) 
  */
 uint64_t timer(int begin)
 {
-   static struct timeval begin_time = {.tv_sec=0, .tv_usec=0};
-   struct timeval end_time = {.tv_sec=0, .tv_usec=0};
+   static struct timespec begin_time = {.tv_sec=0, .tv_nsec=0};
+   struct timespec end_time = {.tv_sec=0, .tv_nsec=0};
    if (begin) {
       // Begin timing and exit:
       sync();
       fflush(NULL);
-      usleep(500000);
-      gettimeofday(&begin_time,NULL);
+      usleep(1000000);
+#ifdef NO_MONOTONIC_CLOCK
+      if (clock_gettime(CLOCK_REALTIME, &begin_time) == -1)
+#else
+      if (clock_gettime(CLOCK_MONOTONIC_RAW, &begin_time) == -1)
+#endif
+         printf("ERROR: clock_gettime does not support CLOCK_MONOTONIC_RAW\n");
+//      printf("Begin time: %ld sec %ld nanoseconds\n", begin_time.tv_sec, begin_time.tv_nsec);
       return 0;
    }
    // End timing and display results:
-   gettimeofday(&end_time,NULL);
-   uint64_t usecs = (end_time.tv_sec * 1000000 + end_time.tv_usec) -
-      (begin_time.tv_sec * 1000000 + begin_time.tv_usec); 
-   return usecs;
+#ifdef NO_MONOTONIC_CLOCK
+   if (clock_gettime(CLOCK_REALTIME, &end_time) == -1)
+#else
+   if (clock_gettime(CLOCK_MONOTONIC_RAW, &end_time) == -1)
+#endif
+      printf("ERROR: clock_gettime does not support CLOCK_MONOTONIC_RAW\n");
+//   printf("End time: %ld sec %ld nanoseconds\n", end_time.tv_sec, end_time.tv_nsec);
+   uint64_t begin_nanoseconds = ((uint64_t) begin_time.tv_sec * 1000000000) + begin_time.tv_nsec;
+   uint64_t end_nanoseconds = ((uint64_t)end_time.tv_sec * 1000000000) + end_time.tv_nsec;
+   uint64_t nanoseconds_taken = end_nanoseconds - begin_nanoseconds;
+//   printf("Operation took: %llu nanoseconds\n", nanoseconds_taken);
+   return nanoseconds_taken;
 }
 
-/* best_of_3_runs() takes two arguments:
+/* best_of_2_runs() takes two arguments:
  * ARG1: Pointer to a specific benchmark bench_entry
  * ARG2: Number of iterations to pass to said function
- * RETURN: Time-to-run-in-microseconds of the fastest of three runs of said function.
+ * and sets bench_entry->time to the number of nanoseconds timer() reports for the faster of the two runs.
  */
-void best_of_2_runs(struct bench_entry *entry, unsigned int iterations)
+void best_of_2_runs(struct bench_entry *entry, int iterations)
 {
    uint64_t a,b;
    timer(1);
@@ -52,7 +89,7 @@ void best_of_2_runs(struct bench_entry *entry, unsigned int iterations)
 // * ARG2: Number of iterations to pass to said function
 // * RETURN: Time-to-run-in-microseconds of the fastest of three runs of said function.
 // */
-//uint64_t best_of_3_runs(void (*benchmark)(uint32_t), unsigned int iterations)
+//uint64_t best_of_3_runs(void (*benchmark)(int), unsigned int iterations)
 //{
 // uint64_t a,b,c, best_time;
 // timer(1);
@@ -73,12 +110,12 @@ void best_of_2_runs(struct bench_entry *entry, unsigned int iterations)
 // return best_time;
 //}
 
-void print_bench_entries(struct bench_entry *bench_entries, uint32_t num_entries, 
-                           uint32_t best_time_index, uint32_t iterations)
+void print_bench_entries(struct bench_entry *bench_entries, int num_entries, 
+                           int best_time_index, int iterations)
 {
    for (int i=0; i < num_entries; i++) {
-      printf("\t%s:\t%llu microsecs,\t or %f secs", 
-            bench_entries[i].desc, bench_entries[i].time, bench_entries[i].time / 1000000.0);
+      printf("\t%s:\t%llu ns,\t or %f secs", 
+            bench_entries[i].desc, bench_entries[i].time, bench_entries[i].time / 1000000000.0);
       if (bench_entries[i].is_best_time)
          printf(" *\n");
       else
@@ -92,11 +129,11 @@ void print_bench_entries(struct bench_entry *bench_entries, uint32_t num_entries
  * Prints the list of timings of the bench entries.
  * Returns bench_entries[] index of the best time found of all functions in it 
  */
-uint32_t run_bench_entries(struct bench_entry *bench_entries, uint32_t num_entries, uint32_t iterations)
+int run_bench_entries(struct bench_entry *bench_entries, int num_entries, int iterations)
 {
    assert(num_entries != 0);
 
-   uint32_t best_time_index = 0;                   // index of best entry found, start at first
+   int best_time_index = 0;                   // index of best entry found, start at first
    uint64_t best_time_so_far = 0xFFFFFFFFFFFFFFFF; // A ridiculously high time to start comparing to
 
    for (int i=0; i < num_entries; i++) {
@@ -164,14 +201,14 @@ void fill_double_array(double *array, double min_range, double max_range)
 
 /* fill_i32_array(): Fill array with random distribution of 32-bit integers within range 1-max_range.
  * ARG1: pointer to array of unsigned integers of size ASIZE_32BIT to fill 
- * ARG2: maximum range: Range can be limited in practicality to a choice of numbers below either 2^32 or 2^16
+ * ARG2: maximum range: Range can be limited in practicality to a choice of numbers below either 2^31 or 2^16
  */
-void fill_i32_array(uint32_t *array, uint32_t max_range)
+void fill_i32_array(int32_t *array, int max_range)
 {
    for (int i = 0; i < ASIZE_32BIT; i++) {
-      uint32_t tmp = 1;    // Ensure no division by zero
+      int32_t tmp;    // Ensure no division by zero
       if (max_range > 0xFFFF) {
-         tmp = lrand48();  // Assign random 32-bit non-negative int
+         tmp = lrand48();  // Assign random 31-bit non-negative int
       } else {
          tmp = lrand48() % 0x10000;
       }
@@ -185,15 +222,15 @@ void fill_i32_array(uint32_t *array, uint32_t max_range)
  * ARG1: pointer to array of unsigned integers of size ASIZE_64BIT to fill 
  * ARG2: maximum range: Range can be limited in practicality to a choice of numbers below either 2^64, 2^32 or 2^16
  */
-void fill_i64_array(uint64_t *array, uint64_t max_range)
+void fill_i64_array(int64_t *array, int64_t max_range)
 {
    for (int i = 0; i < ASIZE_64BIT; i++) {
-      uint64_t tmp = 1;
+      int64_t tmp = 1;
       if (max_range > 0xFFFFFFFF) {          // Is our range greater than 2^32?
-         tmp = (uint64_t) lrand48() << 32;    //    Assign a random 32-bit number to upper half
+         tmp = (uint64_t) lrand48() << 32;    //    Assign a random 31-bit number to upper half
          tmp |= (uint64_t) lrand48();         //    And assign one to the lower half.
       } else if (max_range > 0xFFFF) {       // Is our range greater than 2^16?
-         tmp = lrand48();                    //    Assign random 32-bit number just to lower half.
+         tmp = lrand48();                    //    Assign random 31-bit number just to lower half.
       } else {
          tmp = lrand48() % 0x10000;    // Our range must be 1-2^16 
       }

@@ -53,35 +53,35 @@ static double approx_double_sqrt (double y)
 }
 
 
-#define BENCH_FLOAT_SQRT_CHUNK      fresult[i] = sqrtf(fval1[i]); i++;  \
-                                    fresult[i] = sqrtf(fval1[i]); i++;  \
-                                    fresult[i] = sqrtf(fval1[i]); i++;  \
-                                    fresult[i] = sqrtf(fval1[i]); i++;
+#define BENCH_FLOAT_SQRT_CHUNK      fval1[i] = sqrtf(fval1[i]); i++;  \
+                                    fval1[i] = sqrtf(fval1[i]); i++;  \
+                                    fval1[i] = sqrtf(fval1[i]); i++;  \
+                                    fval1[i] = sqrtf(fval1[i]); i++;
 
-void bench_float_sqrt_4(uint32_t iterations)
+void bench_float_sqrt_4(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FLOAT_SQRT_CHUNK
       }
    }
 }
 
-void bench_float_sqrt_8(uint32_t iterations)
+void bench_float_sqrt_8(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FLOAT_SQRT_CHUNK  BENCH_FLOAT_SQRT_CHUNK
       }
    }
 }
 
-void bench_float_sqrt_16(uint32_t iterations)
+void bench_float_sqrt_16(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FLOAT_SQRT_CHUNK  BENCH_FLOAT_SQRT_CHUNK
          BENCH_FLOAT_SQRT_CHUNK  BENCH_FLOAT_SQRT_CHUNK
@@ -89,10 +89,10 @@ void bench_float_sqrt_16(uint32_t iterations)
    }
 }
 
-void bench_float_sqrt_32(uint32_t iterations)
+void bench_float_sqrt_32(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FLOAT_SQRT_CHUNK  BENCH_FLOAT_SQRT_CHUNK
          BENCH_FLOAT_SQRT_CHUNK  BENCH_FLOAT_SQRT_CHUNK
@@ -108,30 +108,30 @@ void bench_float_sqrt_32(uint32_t iterations)
                                     fresult[i] = magic_sqrt(fval1[i]);  i++; \
                                     fresult[i] = magic_sqrt(fval1[i]);  i++;
 
-void bench_quake_sqrt_4(uint32_t iterations)
+void bench_quake_sqrt_4(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_QUAKE_SQRT_CHUNK
       }
    }
 }
 
-void bench_quake_sqrt_8(uint32_t iterations)
+void bench_quake_sqrt_8(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_QUAKE_SQRT_CHUNK  BENCH_QUAKE_SQRT_CHUNK
       }
    }
 }
 
-void bench_quake_sqrt_16(uint32_t iterations)
+void bench_quake_sqrt_16(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_QUAKE_SQRT_CHUNK  BENCH_QUAKE_SQRT_CHUNK
          BENCH_QUAKE_SQRT_CHUNK  BENCH_QUAKE_SQRT_CHUNK
@@ -139,10 +139,10 @@ void bench_quake_sqrt_16(uint32_t iterations)
    }
 }
 
-void bench_quake_sqrt_32(uint32_t iterations)
+void bench_quake_sqrt_32(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_QUAKE_SQRT_CHUNK  BENCH_QUAKE_SQRT_CHUNK
          BENCH_QUAKE_SQRT_CHUNK  BENCH_QUAKE_SQRT_CHUNK
@@ -158,39 +158,39 @@ void bench_quake_sqrt_32(uint32_t iterations)
                                     dresult[i] = sqrt(dval1[i]);  i++; \
                                     dresult[i] = sqrt(dval1[i]);  i++;
 
-void bench_double_sqrt_4(uint32_t iterations)
+void bench_double_sqrt_4(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_DOUBLE_SQRT_CHUNK
       }
    }
 }
 
-void bench_double_sqrt_8(uint32_t iterations)
+void bench_double_sqrt_8(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_DOUBLE_SQRT_CHUNK    BENCH_DOUBLE_SQRT_CHUNK
       }
    }
 }
 
-void bench_double_sqrt_16(uint32_t iterations)
+void bench_double_sqrt_16(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_DOUBLE_SQRT_CHUNK    BENCH_DOUBLE_SQRT_CHUNK
          BENCH_DOUBLE_SQRT_CHUNK    BENCH_DOUBLE_SQRT_CHUNK
@@ -198,13 +198,13 @@ void bench_double_sqrt_16(uint32_t iterations)
    }
 }
 
-void bench_double_sqrt_32(uint32_t iterations)
+void bench_double_sqrt_32(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_DOUBLE_SQRT_CHUNK    BENCH_DOUBLE_SQRT_CHUNK
          BENCH_DOUBLE_SQRT_CHUNK    BENCH_DOUBLE_SQRT_CHUNK
@@ -220,39 +220,39 @@ void bench_double_sqrt_32(uint32_t iterations)
                                           dresult[i] = approx_double_sqrt(dval1[i]); i++; \
                                           dresult[i] = approx_double_sqrt(dval1[i]); i++;
 
-void bench_approx_double_sqrt_4(uint32_t iterations)
+void bench_approx_double_sqrt_4(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_APPROX_DOUBLE_SQRT_CHUNK
       }
    }
 }
 
-void bench_approx_double_sqrt_8(uint32_t iterations)
+void bench_approx_double_sqrt_8(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_APPROX_DOUBLE_SQRT_CHUNK   BENCH_APPROX_DOUBLE_SQRT_CHUNK
       }
    }
 }
 
-void bench_approx_double_sqrt_16(uint32_t iterations)
+void bench_approx_double_sqrt_16(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_APPROX_DOUBLE_SQRT_CHUNK   BENCH_APPROX_DOUBLE_SQRT_CHUNK
          BENCH_APPROX_DOUBLE_SQRT_CHUNK   BENCH_APPROX_DOUBLE_SQRT_CHUNK
@@ -260,13 +260,13 @@ void bench_approx_double_sqrt_16(uint32_t iterations)
    }
 }
 
-void bench_approx_double_sqrt_32(uint32_t iterations)
+void bench_approx_double_sqrt_32(int iterations)
 {
    // Do twice the number of iterations because our 64-bit arrays are half as big as the 32-bit arrays.
    iterations *= 2;
 
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {     
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {     
       for (i=0; i < ASIZE_64BIT;) {
          BENCH_APPROX_DOUBLE_SQRT_CHUNK   BENCH_APPROX_DOUBLE_SQRT_CHUNK
          BENCH_APPROX_DOUBLE_SQRT_CHUNK   BENCH_APPROX_DOUBLE_SQRT_CHUNK
@@ -282,30 +282,30 @@ void bench_approx_double_sqrt_32(uint32_t iterations)
                                     xresult[i] = FSQRT(xval1[i]);    i++;  \
                                     xresult[i] = FSQRT(xval1[i]);    i++;
 
-void bench_fixed_sqrt_4(uint32_t iterations)
+void bench_fixed_sqrt_4(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FIXED_SQRT_CHUNK
       }
    }
 }
 
-void bench_fixed_sqrt_8(uint32_t iterations)
+void bench_fixed_sqrt_8(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FIXED_SQRT_CHUNK  BENCH_FIXED_SQRT_CHUNK
       }
    }
 }
 
-void bench_fixed_sqrt_16(uint32_t iterations)
+void bench_fixed_sqrt_16(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FIXED_SQRT_CHUNK  BENCH_FIXED_SQRT_CHUNK
          BENCH_FIXED_SQRT_CHUNK  BENCH_FIXED_SQRT_CHUNK
@@ -313,10 +313,10 @@ void bench_fixed_sqrt_16(uint32_t iterations)
    }
 }
 
-void bench_fixed_sqrt_32(uint32_t iterations)
+void bench_fixed_sqrt_32(int iterations)
 {
-   uint32_t i;
-   for (uint32_t iter = 0; iter < iterations; iter++) {
+   int i;
+   for (int iter = 0; iter < iterations; iter++) {
       for (i=0; i < ASIZE_32BIT;) {
          BENCH_FIXED_SQRT_CHUNK  BENCH_FIXED_SQRT_CHUNK
          BENCH_FIXED_SQRT_CHUNK  BENCH_FIXED_SQRT_CHUNK
