@@ -120,7 +120,7 @@ void print_summary_to_file(FILE *fp, struct summary_entry *entries, int num_entr
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
    fprintf(fp, "|                               FPBENCH SUMMARY                                |\n");
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
-   fprintf(fp, "| Iterations: %-23d | Math ops per iteration: %-13d |\n", iterations, ASIZE_32BIT);
+   fprintf(fp, "| Iterations: %-23d | Math ops per iteration: %-14d |\n", iterations, ASIZE_32BIT);
    fprintf(fp, "+------------------------------------------------------------------------------+\n\n");
 
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
