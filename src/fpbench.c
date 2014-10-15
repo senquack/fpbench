@@ -120,11 +120,11 @@ void print_summary_to_file(FILE *fp, struct summary_entry *entries, int num_entr
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
    fprintf(fp, "|                               FPBENCH SUMMARY                                |\n");
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
-   fprintf(fp, "| Iterations: %-24d | Math ops per iteration: %-13d |\n", iterations, ASIZE_32BIT);
+   fprintf(fp, "| Iterations: %-23d | Math ops per iteration: %-13d |\n", iterations, ASIZE_32BIT);
    fprintf(fp, "+------------------------------------------------------------------------------+\n\n");
 
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
-   fprintf(fp, "| Benchmark description               |  ns / operation   | millions of op / s |\n");
+   fprintf(fp, "| Benchmark description               | ns per operation  | millions of op / s |\n");
    fprintf(fp, "|                                     | (lower = better)  |  (higher = better) |\n");
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
 
@@ -132,10 +132,6 @@ void print_summary_to_file(FILE *fp, struct summary_entry *entries, int num_entr
       if ( entry_ptr->is_separator_entry ) {
          fprintf(fp, "+------------------------------------------------------------------------------+\n");
       } else {
-         // OLD, BAD CODE:
-//          fprintf(fp, "| %-41s|%17.7f | %15.7f|\n", entry_ptr->desc,
-//            (double)entry_ptr->time / (double)iterations / 1000.0,
-//            1000000000.0 / (double)entry_ptr->time);
          fprintf(fp, "| %-36s|%19.4f|%20.6f|\n", entry_ptr->desc, 
                (double)entry_ptr->time / (double)iterations / (double)ASIZE_32BIT,  // Time to complete 1 op in nanoseconds
                1000.0 / ((double)entry_ptr->time / (double)iterations / (double)ASIZE_32BIT));  // Million oper's / sec
