@@ -8,25 +8,24 @@ SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_di
 OBJS 		= $(SOURCES:.c=.o)
 PROG   	= $(NAME)
 
-#CFLAGS = -Wall -std=gnu99 -O2 
-#CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer
-CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer
+CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
 LDFLAGS = -lm -lrt
 
-#BUILDS AVAILABLE:
+##### PRE-CONFIGURED BUILDS AVAILABLE:
 
 # ***** VERY IMPORTANT NOTE FOR ARM & MIPS PLATFORMS: *****
 # ***** Compile with CFLAGS += -DSELF_ASSIGN for maximum
-# ***** performance and most-accurate results:
-CFLAGS += -DSELF_ASSIGN
+# ***** performance 
+#CFLAGS += -DSELF_ASSIGN
 
 # -----> (GCW ZERO)  OpenDingux:
 CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+CFLAGS += -DSELF_ASSIGN
 
 # -----> (IMGTEC CI20 jz4780)
 #CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+#CFLAGS += -DSELF_ASSIGN
 #LDFLAGS += -static
-
 
 # -----> (DINGOO A320) OpenDingux:	(also used to generate GCW-Zero soft-float version)
 #CC	= /opt/opendingux-toolchain/usr/bin/mipsel-unknown-linux-uclibc-gcc
@@ -36,16 +35,18 @@ CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
 
 # -----> (WIZ/GP2X) Open2x GP2X Toolchain
 #CC	= /opt/open2x/gcc-4.1.1-glibc-2.3.6/bin/arm-open2x-linux-gcc
-#CFLAGS += -static -msoft-float -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include 
+#CFLAGS += -msoft-float -I/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/include 
 #CFLAGS += -DNO_MONOTONIC_CLOCK -DSELF_ASSIGN
 #LDFLAGS +=	-L/opt/open2x/gcc-4.1.1-glibc-2.3.6/arm-open2x-linux/lib
+#LDFLAGS += -static
 
-# -----> My Pentium-M 32-bit Intel laptop:
-#CC =	gcc
-#CFLAGS += -march=pentium-m -mfpmath=387
+# -----> Intel Pentium-M 32-bit:
+#CFLAGS += -march=pentium-m -mtune=pentium-m -mfpmath=both -msse2
 
-##DEBUGGING:
-##CFLAGS = -g -Wall -std=gnu99 -O0 
+# -----> Intel Core2 64-bit:
+#CFLAGS += -m64 -march=core2 -mtune=core2 -msse3
+#LDFLAGS += -m64
+
 
 .PHONY:	asm clean
 all:	$(PROG) asm
