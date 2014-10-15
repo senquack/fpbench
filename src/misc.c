@@ -63,7 +63,7 @@ void print_bench_entries(struct bench_entry *bench_entries, int num_entries,
 {
    for (int i=0; i < num_entries; i++) {
       printf("\t%s:\t%llu ns,\t or %f secs", 
-            bench_entries[i].desc, bench_entries[i].time, bench_entries[i].time / 1000000000.0);
+            bench_entries[i].desc, (long long unsigned int)bench_entries[i].time, bench_entries[i].time / 1000000000.0);
       if (bench_entries[i].is_best_time)
          printf(" *\n");
       else

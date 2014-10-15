@@ -478,8 +478,8 @@ int main(int argc, char **argv)
    printf("The first with inner loop unrolled 4-fold, the second 8-fold,\n");
    printf("the third 16-fold, and the fourth 32-fold. All of these are run twice,\n");
    printf("and the fastest of the two times is the one recorded.\n\n");
-   printf("Reported size of floats on this architecture:\t%d\n", sizeof(float)*8);
-   printf("Reported size of doubles on this architecture:\t%d\n", sizeof(double)*8);
+   printf("Reported size of floats on this architecture:\t%d\n", (int)sizeof(float)*8);
+   printf("Reported size of doubles on this architecture:\t%d\n", (int)sizeof(double)*8);
    printf("Benchmark requested: %u iterations.\n", iterations);
    printf("Number of computations issued per iteration: %d\n", ASIZE_32BIT);
 
