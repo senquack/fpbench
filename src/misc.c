@@ -41,6 +41,21 @@ uint64_t timer(int begin)
    return nanoseconds_taken;
 }
 
+/* A spinning single-character progress indicator as each sub-benchmark proceeds: */
+void advance_progress_indicator(void)
+{
+   static const char heartbeat [4] = { '-', '\\', '|', '/'};
+   static const int total_heartbeat_chars = 4;
+   static int cur_idx = 0;
+   printf("%c\b", heartbeat[cur_idx++]);
+   fflush(NULL);
+   usleep(200000);
+
+   if (cur_idx == total_heartbeat_chars)
+      cur_idx = 0;
+}
+   
+ 
 /* best_of_2_runs() takes two arguments:
  * ARG1: Pointer to a specific benchmark bench_entry
  * ARG2: Number of iterations to pass to said function
@@ -49,12 +64,17 @@ uint64_t timer(int begin)
 void best_of_2_runs(struct bench_entry *entry, int iterations)
 {
    uint64_t a,b;
+
    timer(1);
    entry->func(iterations);
    a = timer(0);
+   advance_progress_indicator();
+
    timer(1);
    entry->func(iterations);
    b = timer(0);
+   advance_progress_indicator();
+
    entry->time = (a < b) ? a : b;
 }
 
@@ -62,7 +82,8 @@ void print_bench_entries(struct bench_entry *bench_entries, int num_entries,
                            int best_time_index, int iterations)
 {
    for (int i=0; i < num_entries; i++) {
-      printf("\t%s:\t%llu ns,\t or %f secs", 
+      // The space in the beginning of the string below is to clear the heartbeat indicator:
+      printf(" \t%s:\t%llu ns,\t or %f secs", 
             bench_entries[i].desc, (long long unsigned int)bench_entries[i].time, bench_entries[i].time / 1000000000.0);
       if (bench_entries[i].is_best_time)
          printf(" *\n");
