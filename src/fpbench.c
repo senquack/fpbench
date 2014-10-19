@@ -102,8 +102,6 @@ void print_csv_summary_to_file(FILE *fp, struct summary_entry *entries, int num_
          } else {
             fprintf(fp, ",");
          }
-         // OLD, BAD CODE:
-//         fprintf(fp, "%.12f", 1000000000.0 / (double)entry_ptr->time );   // print # of iterations a second
          fprintf(fp, "%.7f", 1000.0 / ((double)entry_ptr->time / (double)iterations / (double)(ASIZE_32BIT)));   // print # of iterations a second
       }
       entry_ptr = entry_ptr->next_entry;
@@ -119,18 +117,18 @@ void print_summary_to_file(FILE *fp, struct summary_entry *entries, int num_entr
    fprintf(fp, "\n");
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
    fprintf(fp, "|                               FPBENCH SUMMARY                                |\n");
-   fprintf(fp, "+------------------------------------------------------------------------------+\n");
+   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
    fprintf(fp, "| Iterations: %-23d | Math ops per iteration: %-14d |\n", iterations, ASIZE_32BIT);
-   fprintf(fp, "+------------------------------------------------------------------------------+\n\n");
+   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
 
-   fprintf(fp, "+------------------------------------------------------------------------------+\n");
+   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
    fprintf(fp, "| Benchmark description               | ns per operation  | millions of op / s |\n");
    fprintf(fp, "|                                     | (lower = better)  |  (higher = better) |\n");
-   fprintf(fp, "+------------------------------------------------------------------------------+\n");
+   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
 
    for (int i = 0; (i < num_entries) && entry_ptr; i++) {
       if ( entry_ptr->is_separator_entry ) {
-         fprintf(fp, "+------------------------------------------------------------------------------+\n");
+         fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
       } else {
          fprintf(fp, "| %-36s|%19.4f|%20.6f|\n", entry_ptr->desc, 
                (double)entry_ptr->time / (double)iterations / (double)ASIZE_32BIT,  // Time to complete 1 op in nanoseconds

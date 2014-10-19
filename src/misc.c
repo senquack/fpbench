@@ -25,7 +25,7 @@ uint64_t timer(int begin)
 #else
       if (clock_gettime(CLOCK_MONOTONIC_RAW, &begin_time) == -1)
 #endif
-         printf("ERROR: clock_gettime does not support CLOCK_MONOTONIC_RAW\n");
+         printf("ERROR: clock_gettime() returned error.\n");
       return 0;
    }
    // End timing and display results:
