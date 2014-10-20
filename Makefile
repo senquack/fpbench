@@ -8,6 +8,7 @@ SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_di
 OBJS 		= $(SOURCES:.c=.o)
 PROG   	= $(NAME)
 
+# CFLAGS common to all platform builds:
 CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
 LDFLAGS = -lm -lrt
 
@@ -20,6 +21,7 @@ LDFLAGS = -lm -lrt
 
 # -----> (GCW ZERO)  OpenDingux:
 CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+CFLAGS += -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
 CFLAGS += -DSELF_ASSIGN
 
 # -----> (IMGTEC CI20 jz4780)
