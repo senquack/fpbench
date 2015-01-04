@@ -30,6 +30,7 @@
 #include "misc.h"
 #include "bench_add.h"
 #include "bench_mul.h"
+#include "bench_mul_add.h"
 #include "bench_div.h"
 #include "bench_sqrt.h"
 #include "bench_conv.h"
@@ -282,6 +283,71 @@ void bench_multiplication(int iterations)
    insert_summary_entry("", 0, 1);
 }
 
+void bench_multiplication_and_addition(int iterations)
+{
+   int best_entry;
+   struct bench_entry bench_entries[4];
+   bench_entries[0].desc = "Unrolled 4  times";
+   bench_entries[1].desc = "Unrolled 8  times";
+   bench_entries[2].desc = "Unrolled 16 times";   
+   bench_entries[3].desc = "Unrolled 32 times";   
+
+   printf("\nMULTIPLICATION + ADDITION BENCHMARKS:\n");
+   printf("Float:\n");
+   fill_float_array(fval1, 0.001, 181.0);    
+   fill_float_array(fval2, 0.001, 181.0);
+   bench_entries[0].func = bench_float_mul_add_4; 
+   bench_entries[1].func = bench_float_mul_add_8; 
+   bench_entries[2].func = bench_float_mul_add_16;
+   bench_entries[3].func = bench_float_mul_add_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("MULT. & ADD (float)", bench_entries[best_entry].time, 0);
+
+   printf("Double:\n");
+   fill_double_array(dval1, 0.001, 181.0);      
+   fill_double_array(dval2, 0.001, 181.0);
+   bench_entries[0].func = bench_double_mul_add_4; 
+   bench_entries[1].func = bench_double_mul_add_8; 
+   bench_entries[2].func = bench_double_mul_add_16;
+   bench_entries[3].func = bench_double_mul_add_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("MULT. & ADD (double)", bench_entries[best_entry].time, 0);
+
+   printf("Fixed-point (16.16):\n");
+   fill_float_array(fval1, 0.001, 181.0);    // Don't want overflow
+   fill_float_array(fval2, 0.001, 181.0);
+   fill_fixed_array_from_float_array(xval1, fval1);
+   fill_fixed_array_from_float_array(xval2, fval2);
+   bench_entries[0].func = bench_fixed_mul_add_4;  
+   bench_entries[1].func = bench_fixed_mul_add_8;  
+   bench_entries[2].func = bench_fixed_mul_add_16; 
+   bench_entries[3].func = bench_fixed_mul_add_32; 
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("MULT. & ADD (fixed-point 16.16)", bench_entries[best_entry].time, 0);
+
+   printf("32-bit integer:\n");
+   fill_i32_array(i32val1, 0xFFFF);
+   fill_i32_array(i32val2, 0xFFFF);
+   bench_entries[0].func = bench_i32_mul_add_4;  
+   bench_entries[1].func = bench_i32_mul_add_8; 
+   bench_entries[2].func = bench_i32_mul_add_16;
+   bench_entries[3].func = bench_i32_mul_add_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("MULT. & ADD (32-bit integer)", bench_entries[best_entry].time, 0);
+
+   printf("64-bit integer:\n");
+   fill_i64_array(i64val1, 0xFFFFFFFF);
+   fill_i64_array(i64val2, 0xFFFFFFFF);
+   bench_entries[0].func = bench_i64_mul_add_4; 
+   bench_entries[1].func = bench_i64_mul_add_8; 
+   bench_entries[2].func = bench_i64_mul_add_16;
+   bench_entries[3].func = bench_i64_mul_add_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("MULT. & ADD (64-bit integer)", bench_entries[best_entry].time, 0);
+
+   insert_summary_entry("", 0, 1);
+}
+
 void bench_division(int iterations)
 {
    int best_entry;
@@ -505,6 +571,7 @@ int main(int argc, char **argv)
    
    bench_addition(iterations);
    bench_multiplication(iterations);
+   bench_multiplication_and_addition(iterations);
    bench_division(iterations);
    bench_squareroot(iterations);
    bench_conversions(iterations);

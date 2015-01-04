@@ -3,12 +3,13 @@
 
 NAME   	= fpbench
 RM     	= rm -rf
-SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_div.c \
-				src/bench_sqrt.c src/bench_conv.c
+SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_mul_add.c \
+            src/bench_div.c src/bench_sqrt.c src/bench_conv.c
 OBJS 		= $(SOURCES:.c=.o)
 PROG   	= $(NAME)
 
 # CFLAGS common to all platform builds:
+#CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
 CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
 LDFLAGS = -lm -lrt
 
@@ -58,11 +59,12 @@ $(PROG): $(OBJS)
 	chmod +x $@
 
 $(OBJS) : src/fpbench.h
-src/fpbench.o :	src/misc.h src/bench_add.h src/bench_mul.h \
+src/fpbench.o :	src/misc.h src/bench_add.h src/bench_mul.h src/bench_mul_add.h \
 						src/bench_div.h src/bench_sqrt.h src/bench_conv.h
 src/misc.o:			src/misc.h
 src/bench_add.o:	src/bench_add.h
 src/bench_mul.o:	src/bench_mul.h
+src/bench_mul_add.o:	src/bench_mul_add.h
 src/bench_div.o:	src/bench_div.h
 src/bench_sqrt.o:	src/bench_sqrt.h
 src/bench_conv.o:	src/bench_conv.h
