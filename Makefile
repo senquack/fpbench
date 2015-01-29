@@ -4,13 +4,13 @@
 NAME   	= fpbench
 RM     	= rm -rf
 SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_mul_add.c \
-            src/bench_div.c src/bench_sqrt.c src/bench_conv.c
+            src/bench_div.c src/bench_sqrt.c src/bench_conv.c src/bench_trig.c
 OBJS 		= $(SOURCES:.c=.o)
 PROG   	= $(NAME)
 
 # CFLAGS common to all platform builds:
 #CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
-CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
+CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer
 LDFLAGS = -lm -lrt
 
 ##### PRE-CONFIGURED BUILDS AVAILABLE:
@@ -44,7 +44,9 @@ CFLAGS += -DSELF_ASSIGN
 #LDFLAGS += -static
 
 # -----> Intel Pentium-M 32-bit:
+#CFLAGS += -march=i686 -mtune=pentium-m
 #CFLAGS += -march=pentium-m -mtune=pentium-m -mfpmath=both -msse2
+#CFLAGS += -march=pentium-m -mtune=pentium-m -mfpmath=sse -msse2
 
 # -----> Intel Core2 64-bit:
 #CFLAGS += -m64 -march=core2 -mtune=core2 -msse3
@@ -60,7 +62,7 @@ $(PROG): $(OBJS)
 
 $(OBJS) : src/fpbench.h
 src/fpbench.o :	src/misc.h src/bench_add.h src/bench_mul.h src/bench_mul_add.h \
-						src/bench_div.h src/bench_sqrt.h src/bench_conv.h
+						src/bench_div.h src/bench_sqrt.h src/bench_conv.h src/bench_trig.h
 src/misc.o:			src/misc.h
 src/bench_add.o:	src/bench_add.h
 src/bench_mul.o:	src/bench_mul.h
@@ -68,6 +70,7 @@ src/bench_mul_add.o:	src/bench_mul_add.h
 src/bench_div.o:	src/bench_div.h
 src/bench_sqrt.o:	src/bench_sqrt.h
 src/bench_conv.o:	src/bench_conv.h
+src/bench_trig.o:	src/bench_trig.h
 
 
 ### Assembly-generation, build_info.txt generation, tar file packing:

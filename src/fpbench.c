@@ -1,23 +1,23 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-* FPBench - Math speed test
-* FPBench homepage: https://github.com/senquack/fpbench
-* Copyright (C) 2014 Daniel Silsby
-* *
-* This program is free software; you can redistribute it and/or modify *
-* it under the terms of the GNU General Public License as published by *
-* the Free Software Foundation; either version 2 of the License, or *
-* any later version. *
-* *
-* This program is distributed in the hope that it will be useful, *
-* but WITHOUT ANY WARRANTY; without even the implied warranty of *
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the *
-* GNU General Public License for more details. *
-* *
-* You should have received a copy of the GNU General Public License *
-* along with this program; if not, write to the *
-* Free Software Foundation, Inc., *
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *
-* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+ * FPBench - Math speed test
+ * FPBench homepage: https://github.com/senquack/fpbench
+ * Copyright (C) 2014 Daniel Silsby
+ * *
+ * This program is free software; you can redistribute it and/or modify *
+ * it under the terms of the GNU General Public License as published by *
+ * the Free Software Foundation; either version 2 of the License, or *
+ * any later version. *
+ * *
+ * This program is distributed in the hope that it will be useful, *
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the *
+ * GNU General Public License for more details. *
+ * *
+ * You should have received a copy of the GNU General Public License *
+ * along with this program; if not, write to the *
+ * Free Software Foundation, Inc., *
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +34,7 @@
 #include "bench_div.h"
 #include "bench_sqrt.h"
 #include "bench_conv.h"
+#include "bench_trig.h"
 
 const char *fpbench_version_str = "1.0";
 
@@ -118,9 +119,9 @@ void print_summary_to_file(FILE *fp, struct summary_entry *entries, int num_entr
    fprintf(fp, "\n");
    fprintf(fp, "+------------------------------------------------------------------------------+\n");
    fprintf(fp, "|                               FPBENCH SUMMARY                                |\n");
-   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
+   fprintf(fp, "+-------------------------------------+----------------------------------------+\n");
    fprintf(fp, "| Iterations: %-23d | Math ops per iteration: %-14d |\n", iterations, ASIZE_32BIT);
-   fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
+   fprintf(fp, "+-------------------------------------+----------------------------------------+\n");
 
    fprintf(fp, "+-------------------------------------+-------------------+--------------------+\n");
    fprintf(fp, "| Benchmark description               | ns per operation  | millions of op / s |\n");
@@ -472,6 +473,74 @@ void bench_squareroot(int iterations)
    insert_summary_entry("", 0, 1);
 }
 
+void bench_trigonometry(int iterations)
+{
+   populate_sin_table();
+   int best_entry;
+   struct bench_entry bench_entries[4];
+   bench_entries[0].desc = "Unrolled 4  times";
+   bench_entries[1].desc = "Unrolled 8  times";
+   bench_entries[2].desc = "Unrolled 16 times";   
+   bench_entries[3].desc = "Unrolled 32 times";   
+
+   printf("\nTRIG BENCHMARKS:\n");
+   printf("SIN LIBM (float sinf()):\n");
+   fill_float_array(fval1, 0.0, 360.0);
+   bench_entries[0].func = bench_float_sinf_4; 
+   bench_entries[1].func = bench_float_sinf_8; 
+   bench_entries[2].func = bench_float_sinf_16;
+   bench_entries[3].func = bench_float_sinf_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN LIBM (float sinf())", bench_entries[best_entry].time, 0);
+
+   printf("SIN LIBM (double sin()):\n");
+   fill_double_array(dval1, 0.0, 360.0);    // Do a direct comparison of above
+   bench_entries[0].func = bench_double_sin_4; 
+   bench_entries[1].func = bench_double_sin_8; 
+   bench_entries[2].func = bench_double_sin_16;
+   bench_entries[3].func = bench_double_sin_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN LIBM (double sin())", bench_entries[best_entry].time, 0);
+
+   printf("SIN APPROX (float 3-term Taylor):\n");
+   fill_float_array(fval1, 0.0, 360.0);
+   bench_entries[0].func = bench_approx_float_sin_4; 
+   bench_entries[1].func = bench_approx_float_sin_8; 
+   bench_entries[2].func = bench_approx_float_sin_16;
+   bench_entries[3].func = bench_approx_float_sin_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN APPROX (float 3-term Taylor)", bench_entries[best_entry].time, 0);
+
+   printf("SIN APPROX (float 3-term Maclaurin):\n");
+   fill_float_array(fval1, 0.0, 360.0);
+   bench_entries[0].func = bench_approx_float_sin_3_terms_4; 
+   bench_entries[1].func = bench_approx_float_sin_3_terms_8; 
+   bench_entries[2].func = bench_approx_float_sin_3_terms_16;
+   bench_entries[3].func = bench_approx_float_sin_3_terms_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN APPROX (float 3-term Maclaurin)", bench_entries[best_entry].time, 0);
+
+   printf("SIN APPROX (float 4-term Maclaurin):\n");
+   fill_float_array(fval1, 0.0, 360.0);
+   bench_entries[0].func = bench_approx_float_sin_4_terms_4; 
+   bench_entries[1].func = bench_approx_float_sin_4_terms_8; 
+   bench_entries[2].func = bench_approx_float_sin_4_terms_16;
+   bench_entries[3].func = bench_approx_float_sin_4_terms_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN APPROX (float 4-term Maclaurin)", bench_entries[best_entry].time, 0);
+
+   printf("SIN LOOKUP (float 1/4-degree acc.):\n");
+   fill_float_array(fval1, 0.0, 360.0);
+   bench_entries[0].func = bench_lookup_float_sin_4; 
+   bench_entries[1].func = bench_lookup_float_sin_8; 
+   bench_entries[2].func = bench_lookup_float_sin_16;
+   bench_entries[3].func = bench_lookup_float_sin_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("SIN LOOKUP (float 1/4-degree acc.)", bench_entries[best_entry].time, 0);
+
+   insert_summary_entry("", 0, 1);
+}
+
 void bench_conversions(int iterations)
 {
    int best_entry;
@@ -485,7 +554,7 @@ void bench_conversions(int iterations)
    fill_float_array(fval1, 0.00001, 0xFFFFFFFF);
    fill_double_array(dval1, 0.00001, 0xFFFFFFFF);
    fill_i32_array(i32val1, 0xFFFFFFFF);
-   
+
    printf("32-bit integer to float:\n");
    bench_entries[0].func = bench_int32_to_float_conv_4;
    bench_entries[1].func = bench_int32_to_float_conv_8;
@@ -551,9 +620,9 @@ int main(int argc, char **argv)
    }
 
    printf("        --- FPBENCH v%s - Math Speed Comparison --- \n", fpbench_version_str);
-   printf("Copyright (c) 2014 Dan Silsby  (dansilsby <AT> gmail <DOT> com)\n");
+   printf("Copyright (c) 2015 Dan Silsby  (dansilsby <AT> gmail <DOT> com)\n");
    printf("Project homepage:   https://github.com/senquack/fpbench\n\n");
-  
+
    printf("Before each timing, sync(), fflush() and a 1-second delay are executed.\n");
    printf("Each benchmark consists of four internal versions:\n");
    printf("The first with inner loop unrolled 4-fold, the second 8-fold,\n");
@@ -568,13 +637,14 @@ int main(int argc, char **argv)
 
    sync();
    usleep(1000000);
-   
+
    bench_addition(iterations);
    bench_multiplication(iterations);
    bench_multiplication_and_addition(iterations);
    bench_division(iterations);
    bench_squareroot(iterations);
    bench_conversions(iterations);
+   bench_trigonometry(iterations);
 
    if (strlen(summary_output_filename) > 0) {
       FILE *fp;
@@ -600,7 +670,7 @@ int main(int argc, char **argv)
          fclose(fp);
       }
    }
-   
+
    free_summary(summary, summary_num_entries);
 
    printf("A copy of this summary has been written to:\n\t%s\n", summary_output_filename);
