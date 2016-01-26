@@ -35,6 +35,7 @@
 #include "bench_sqrt.h"
 #include "bench_conv.h"
 #include "bench_trig.h"
+#include "bench_rand.h"
 
 const char *fpbench_version_str = "1.0";
 
@@ -485,7 +486,7 @@ void bench_trigonometry(int iterations)
 
    printf("\nTRIG BENCHMARKS:\n");
    printf("SIN LIBM (float sinf()):\n");
-   fill_float_array(fval1, 0.0, 360.0);
+   fill_float_array(fval1, 0.0, (4.0f*360.0f));
    bench_entries[0].func = bench_float_sinf_4; 
    bench_entries[1].func = bench_float_sinf_8; 
    bench_entries[2].func = bench_float_sinf_16;
@@ -494,7 +495,7 @@ void bench_trigonometry(int iterations)
    insert_summary_entry("SIN LIBM (float sinf())", bench_entries[best_entry].time, 0);
 
    printf("SIN LIBM (double sin()):\n");
-   fill_double_array(dval1, 0.0, 360.0);    // Do a direct comparison of above
+   fill_double_array(dval1, 0.0, (4.0*360.0));    // Do a direct comparison of above
    bench_entries[0].func = bench_double_sin_4; 
    bench_entries[1].func = bench_double_sin_8; 
    bench_entries[2].func = bench_double_sin_16;
@@ -530,7 +531,7 @@ void bench_trigonometry(int iterations)
    insert_summary_entry("SIN APPROX (float 4-term Maclaurin)", bench_entries[best_entry].time, 0);
 
    printf("SIN LOOKUP (float 1/4-degree acc.):\n");
-   fill_float_array(fval1, 0.0, 360.0);
+   fill_float_array(fval1, 0.0, (4.0f*360.0f));
    bench_entries[0].func = bench_lookup_float_sin_4; 
    bench_entries[1].func = bench_lookup_float_sin_8; 
    bench_entries[2].func = bench_lookup_float_sin_16;
@@ -606,6 +607,55 @@ void bench_conversions(int iterations)
    insert_summary_entry("", 0, 1);
 }
 
+void bench_random(int iterations)
+{
+   srand(0xDEADBEEF);
+   seed_fast_rand(0xDEADBEEF);
+   seed_rand_r(0xDEADBEEF);
+
+   int best_entry;
+   struct bench_entry bench_entries[4];
+   bench_entries[0].desc = "Unrolled 4  times";
+   bench_entries[1].desc = "Unrolled 8  times";
+   bench_entries[2].desc = "Unrolled 16 times";   
+   bench_entries[3].desc = "Unrolled 32 times";   
+
+   printf("\nRANDOM NUMBER  BENCHMARKS:\n");
+   printf("rand() (32-bit int):\n");
+   bench_entries[0].func = bench_rand_4; 
+   bench_entries[1].func = bench_rand_8; 
+   bench_entries[2].func = bench_rand_16;
+   bench_entries[3].func = bench_rand_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("rand() (32-bit int)", bench_entries[best_entry].time, 0);
+
+   printf("rand_r() (32-bit int):\n");
+   bench_entries[0].func = bench_rand_r_4; 
+   bench_entries[1].func = bench_rand_r_8; 
+   bench_entries[2].func = bench_rand_r_16;
+   bench_entries[3].func = bench_rand_r_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("rand_r() (32-bit int)", bench_entries[best_entry].time, 0);
+
+   printf("fast_rand() (32-bit int):\n");
+   bench_entries[0].func = bench_fast_rand_4; 
+   bench_entries[1].func = bench_fast_rand_8; 
+   bench_entries[2].func = bench_fast_rand_16;
+   bench_entries[3].func = bench_fast_rand_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("fast_rand() (32-bit int)", bench_entries[best_entry].time, 0);
+
+   printf("Marsaglia xorshf96() (32-bit int):\n");
+   bench_entries[0].func = bench_xorshf96_4; 
+   bench_entries[1].func = bench_xorshf96_8; 
+   bench_entries[2].func = bench_xorshf96_16;
+   bench_entries[3].func = bench_xorshf96_32;
+   best_entry = run_bench_entries(bench_entries, 4, iterations);
+   insert_summary_entry("Marsaglia xorshf96() (32-bit int)", bench_entries[best_entry].time, 0);
+
+   insert_summary_entry("", 0, 1);
+}
+
 int main(int argc, char **argv)
 {
    srand48(0xDEADBEEF); // Seed RNG with the same constant always for consistent comparisons across runs
@@ -645,6 +695,7 @@ int main(int argc, char **argv)
    bench_squareroot(iterations);
    bench_conversions(iterations);
    bench_trigonometry(iterations);
+   bench_random(iterations);
 
    if (strlen(summary_output_filename) > 0) {
       FILE *fp;

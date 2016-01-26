@@ -3,14 +3,15 @@
 
 NAME   	= fpbench
 RM     	= rm -rf
-SOURCES 	= src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_mul_add.c \
-            src/bench_div.c src/bench_sqrt.c src/bench_conv.c src/bench_trig.c
+SOURCES	=	src/fpbench.c src/misc.c src/bench_add.c src/bench_mul.c src/bench_mul_add.c \
+			src/bench_div.c src/bench_sqrt.c src/bench_conv.c src/bench_trig.c \
+			src/bench_rand.c
 OBJS 		= $(SOURCES:.c=.o)
 PROG   	= $(NAME)
 
 # CFLAGS common to all platform builds:
-#CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer -ffast-math
-CFLAGS = -Wall -std=gnu99 -O3 -fomit-frame-pointer
+#CFLAGS = -Wall -std=gnu99 -O2 -fomit-frame-pointer -ffast-math
+CFLAGS = -Wall -std=gnu99 -O2 -fno-inline -fomit-frame-pointer
 LDFLAGS = -lm -lrt
 
 ##### PRE-CONFIGURED BUILDS AVAILABLE:
@@ -20,10 +21,13 @@ LDFLAGS = -lm -lrt
 # ***** performance 
 #CFLAGS += -DSELF_ASSIGN
 
+# -----> Generic build:
+CC = gcc
+
 # -----> (GCW ZERO)  OpenDingux:
-CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
-CFLAGS += -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
-CFLAGS += -DSELF_ASSIGN
+#CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
+#CFLAGS += -I/opt/gcw0-toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr/include
+#CFLAGS += -DSELF_ASSIGN
 
 # -----> (IMGTEC CI20 jz4780)
 #CC = /opt/gcw0-toolchain/usr/bin/mipsel-gcw0-linux-uclibc-gcc
@@ -61,8 +65,9 @@ $(PROG): $(OBJS)
 	chmod +x $@
 
 $(OBJS) : src/fpbench.h
-src/fpbench.o :	src/misc.h src/bench_add.h src/bench_mul.h src/bench_mul_add.h \
-						src/bench_div.h src/bench_sqrt.h src/bench_conv.h src/bench_trig.h
+src/fpbench.o :	src/misc.h src/bench_add.h src/bench_mul.h src/bench_mul_add.h      \
+				src/bench_div.h src/bench_sqrt.h src/bench_conv.h src/bench_trig.h  \
+				src/bench_rand.h
 src/misc.o:			src/misc.h
 src/bench_add.o:	src/bench_add.h
 src/bench_mul.o:	src/bench_mul.h
@@ -71,6 +76,7 @@ src/bench_div.o:	src/bench_div.h
 src/bench_sqrt.o:	src/bench_sqrt.h
 src/bench_conv.o:	src/bench_conv.h
 src/bench_trig.o:	src/bench_trig.h
+src/bench_rand.o:	src/bench_rand.h
 
 
 ### Assembly-generation, build_info.txt generation, tar file packing:

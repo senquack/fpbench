@@ -24,10 +24,10 @@
 
 // We do not bother with SELF_ASSIGN option here, as no platform seems to benefit from it
 
-#define BENCH_FLOAT_MUL_ADD_CHUNK    fresult[i] = fval1[i] * fval2[i] + 1.0f;   i++; \
-                                     fresult[i] = fval1[i] * fval2[i] + 1.0f;   i++; \
-                                     fresult[i] = fval1[i] * fval2[i] + 1.0f;   i++; \
-                                     fresult[i] = fval1[i] * fval2[i] + 1.0f;   i++;
+#define BENCH_FLOAT_MUL_ADD_CHUNK    fresult[i] += fval1[i] * fval2[i];   i++; \
+                                     fresult[i] += fval1[i] * fval2[i];   i++; \
+                                     fresult[i] += fval1[i] * fval2[i];   i++; \
+                                     fresult[i] += fval1[i] * fval2[i];   i++;
 
 void bench_float_mul_add_4(int iterations)
 {
@@ -73,10 +73,10 @@ void bench_float_mul_add_32(int iterations)
    }
 }
 
-#define BENCH_DOUBLE_MUL_ADD_CHUNK   dresult[i] = dval1[i] * dval2[i] + 1.0;   i++; \
-                                     dresult[i] = dval1[i] * dval2[i] + 1.0;   i++; \
-                                     dresult[i] = dval1[i] * dval2[i] + 1.0;   i++; \
-                                     dresult[i] = dval1[i] * dval2[i] + 1.0;   i++;
+#define BENCH_DOUBLE_MUL_ADD_CHUNK   dresult[i] += dval1[i] * dval2[i];   i++; \
+                                     dresult[i] += dval1[i] * dval2[i];   i++; \
+                                     dresult[i] += dval1[i] * dval2[i];   i++; \
+                                     dresult[i] += dval1[i] * dval2[i];   i++;
 
 void bench_double_mul_add_4(int iterations)
 {
@@ -134,10 +134,10 @@ void bench_double_mul_add_32(int iterations)
    }
 }
 
-#define BENCH_FIXED_MUL_ADD_CHUNK    xresult[i] = FMUL(xval1[i], xval2[i]) + 1;    i++;  \
-                                     xresult[i] = FMUL(xval1[i], xval2[i]) + 1;    i++;  \
-                                     xresult[i] = FMUL(xval1[i], xval2[i]) + 1;    i++;  \
-                                     xresult[i] = FMUL(xval1[i], xval2[i]) + 1;    i++;
+#define BENCH_FIXED_MUL_ADD_CHUNK    xresult[i] += FMUL(xval1[i], xval2[i]);    i++;  \
+                                     xresult[i] += FMUL(xval1[i], xval2[i]);    i++;  \
+                                     xresult[i] += FMUL(xval1[i], xval2[i]);    i++;  \
+                                     xresult[i] += FMUL(xval1[i], xval2[i]);    i++;
 
 void bench_fixed_mul_add_4(int iterations)
 {
@@ -185,10 +185,10 @@ void bench_fixed_mul_add_32(int iterations)
 
 // We do not bother with SELF_ASSIGN option here, as no platform seems to benefit from it:
 
-#define BENCH_I32_MUL_ADD_CHUNK      i32result[i] = i32val1[i] * i32val2[i] + 1;   i++;  \
-                                     i32result[i] = i32val1[i] * i32val2[i] + 1;   i++;  \
-                                     i32result[i] = i32val1[i] * i32val2[i] + 1;   i++;  \
-                                     i32result[i] = i32val1[i] * i32val2[i] + 1;   i++;
+#define BENCH_I32_MUL_ADD_CHUNK      i32result[i] += i32val1[i] * i32val2[i];   i++;  \
+                                     i32result[i] += i32val1[i] * i32val2[i];   i++;  \
+                                     i32result[i] += i32val1[i] * i32val2[i];   i++;  \
+                                     i32result[i] += i32val1[i] * i32val2[i];   i++;
 
 void bench_i32_mul_add_4(int iterations)
 {
@@ -234,10 +234,10 @@ void bench_i32_mul_add_32(int iterations)
    }
 }
 
-#define BENCH_I64_MUL_ADD_CHUNK      i64result[i] = i64val1[i] * i64val2[i] + 1;   i++;  \
-                                     i64result[i] = i64val1[i] * i64val2[i] + 1;   i++;  \
-                                     i64result[i] = i64val1[i] * i64val2[i] + 1;   i++;  \
-                                     i64result[i] = i64val1[i] * i64val2[i] + 1;   i++;
+#define BENCH_I64_MUL_ADD_CHUNK      i64result[i] += i64val1[i] * i64val2[i];   i++;  \
+                                     i64result[i] += i64val1[i] * i64val2[i];   i++;  \
+                                     i64result[i] += i64val1[i] * i64val2[i];   i++;  \
+                                     i64result[i] += i64val1[i] * i64val2[i];   i++;
 
 void bench_i64_mul_add_4(int iterations)
 {

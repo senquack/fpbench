@@ -23,8 +23,6 @@
 #include "fpbench.h"
 #include "bench_trig.h"
 
-// Sine lookup table contains 90 additional elements, for possible use 
-//    with unimplemented cos()
 #define SIN_TABLE_ELEMS ((360 + 90)*4)
 static float sin_table[SIN_TABLE_ELEMS];    // 1/4 degree accuracy
 
@@ -37,10 +35,32 @@ void populate_sin_table(void)
    }
 }
 
-static inline float lookup_sin_deg(float x)
+static float lookup_sin_deg(float deg)
 {
-   x *= 4.0f;
-   int idx = (int)(x + 0.5f);
+   while (deg > 360.0f) {
+      deg -= 360.0f;
+   }
+   while (deg < 0.0f) {
+      deg += 360.0f;
+   }
+
+   deg *= 4.0f;
+   int idx = (int)(deg + 0.5f);
+   return sin_table[idx];
+}
+
+static float lookup_sin_rad(float rad)
+{
+   float deg = rad * (180.0f / (float)M_PI);
+   while (deg > 360.0f) {
+      deg -= 360.0f;
+   }
+   while (deg < 0.0f) {
+      deg += 360.0f;
+   }
+
+   deg *= 4.0f;
+   int idx = (int)(deg + 0.5f);
    return sin_table[idx];
 }
 
@@ -104,8 +124,6 @@ static inline float approx_sin_4_terms(float in)
 }
 */
 
-//Note: This approximates sin() using a Maclaurin version of a Taylor series of j terms,
-//      and it is quite accurate at j=4 or even at j=3 for 6 significant digits
 float approx_sin_n_terms(float x, int j)
 {
    float sign = 1.0f;
@@ -123,30 +141,19 @@ float approx_sin_n_terms(float x, int j)
       sign *= -1.0f;
    }
 
-   float val = 1.0f;
+    float val = 1.0f;
 
-   for (float k = j - 1; k >= 0; k-=1.0f)
-      val = 1.0f - x*x/(2.0f*k+2.0f)/(2.0f*k+3.0f)*val;
+    for (float k = j - 1; k >= 0; k-=1.0f)
+        val = 1.0f - x*x/(2.0f*k+2.0f)/(2.0f*k+3.0f)*val;
 
-   return x * val * sign;
+    return x * val * sign;
 }
 
-//For posterity, here is an untested version of the above for cos():
-/*
-float approx_cos_n_terms(float x, int j)
-{
-   float val = 1.0f;
-   for (float k = j - 1.0f; k >= 0; k-=1.0f)
-      val = 1.0f - x*x/(2.0f*k+2.0f)/(2.0f*k+1.0f)*val;
-   return val;
-}
-*/
 
-
-#define BENCH_FLOAT_SINF_CHUNK      fresult[i] = sinf(fval1[i] * (M_PI / 180.0f)); i++;  \
-                                    fresult[i] = sinf(fval1[i] * (M_PI / 180.0f)); i++;  \
-                                    fresult[i] = sinf(fval1[i] * (M_PI / 180.0f)); i++;  \
-                                    fresult[i] = sinf(fval1[i] * (M_PI / 180.0f)); i++;
+#define BENCH_FLOAT_SINF_CHUNK      fresult[i] = sinf(fval1[i] * ((float)M_PI / 180.0f)); i++;  \
+                                    fresult[i] = sinf(fval1[i] * ((float)M_PI / 180.0f)); i++;  \
+                                    fresult[i] = sinf(fval1[i] * ((float)M_PI / 180.0f)); i++;  \
+                                    fresult[i] = sinf(fval1[i] * ((float)M_PI / 180.0f)); i++;
 
 void bench_float_sinf_4(int iterations)
 {
@@ -453,3 +460,29 @@ void bench_lookup_float_sin_32(int iterations)
       }
    }
 }
+
+//experiment/debug:
+#include "stdlib.h"
+#include "stdio.h"
+void test_trig()
+{
+//   srand(0xDEADBEEF);
+   srand48(0xDEADBEEF); // Seed RNG with the same constant always for consistent comparisons across runs
+   populate_sin_table();
+   float f_result, t_result, a3_result, a4_result, l_result;
+   double d_result;
+   
+   for (int i = 0; i < 50; i++) {
+      float deg = (float)(drand48() * (360.0f + 90.0f));
+      f_result = sinf(deg * M_PI / 180.0f);
+      d_result = sin(deg * M_PI / 180.0);
+//      a_result = approx_sin_deg(deg);
+      t_result = approx_sin_deg_3_terms(deg);
+      a3_result = approx_sin_n_terms((deg *( M_PI / 180.0f)), 3);
+      a4_result = approx_sin_n_terms((deg *( M_PI / 180.0f)), 4);
+      l_result = lookup_sin_deg(deg);
+      printf("Deg: %f\tF: %f D: %f T: %f A3: %f A4: %f L: %f\n", deg, f_result, d_result, t_result, a3_result, a4_result, l_result);
+   }
+}
+
+
